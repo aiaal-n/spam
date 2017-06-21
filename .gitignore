@@ -5,6 +5,5 @@ __pycache__/*
 __init__.py
 /app/__pycache__/*
 /app/__init__.py
-*.db
 *.xlsx
 *.txt

@@ -9,7 +9,7 @@ from flask import render_template, request, session, redirect, flash, url_for
 
 from app import app
 from datetime import datetime
-from app.models import Mails 
+from app.models import Mails, db
 
 
 from email.header import Header
@@ -20,7 +20,8 @@ app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
 @app.route("/", methods=["POST","GET"])
 def index():
-	emails = Mails.query.all()	
+	emails = Mails.query.all()
+	print(emails)
 	return render_template("index.html", emails=emails)
 
 @app.route("/dowload", methods=["POST","GET"])
