@@ -20,9 +20,10 @@ app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
 @app.route("/", methods=["POST","GET"])
 def index():
-	emails = Mails.query.all()
-	print(emails)
-	return render_template("index.html", emails=emails)
+	data = Mails.query.all()
+	for i in data:
+		print(i.name)
+	return render_template("index.html", data=data)
 
 @app.route("/dowload", methods=["POST","GET"])
 def dowload():
@@ -36,9 +37,10 @@ def dowload():
 		for column in sheet.row:
 			if validate_email(column[2]):
 				out_dict[column[1]] = column[2]
-		addMail = Mails(mails=out_dict)
-		db.session.add(addMail)
-		db.session.commit()	
+		# print(json.dumps(out_dict, ensure_ascii=False))
+				addMail = Mails(name=column[1], mails=column[2])
+				db.session.add(addMail)
+				db.session.commit()	
 	return render_template("dowloads.html")
 
 
