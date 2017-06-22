@@ -4,6 +4,7 @@ import time
 import random, json
 import pyexcel.ext.xls
 import flask_excel as excel
+from flask_paginate import Pagination, get_page_parameter
 
 from flask import render_template, request, session, redirect, flash, url_for
 
@@ -18,12 +19,15 @@ from validate_email import validate_email
 
 app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
+ITEMS_PER_PAGE = 10
+
 @app.route("/", methods=["POST","GET"])
 def index():
 	data = Mails.query.all()
-	for i in data:
-		print(i.name)
-	return render_template("index.html", data=data)
+	page = int(request.args.get('page', 1))
+	pagination = Pagination(page=page, total=len(data), per_page=ITEMS_PER_PAGE, css_framework='bootstrap3', record_name='data')
+	
+	return render_template("index.html", page=page, per_page=ITEMS_PER_PAGE, data=data, pagination=pagination)
 
 @app.route("/dowload", methods=["POST","GET"])
 def dowload():
