@@ -16,14 +16,18 @@ from validate_email import validate_email
 
 app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
-ITEMS_PER_PAGE = 10
+# ITEMS_PER_PAGE = 10
 
 @app.route('/', methods=["POST", "GET"] )
 def index():
+    id = request.args.get('id')
+    if id == None:
+        ITEMS_PER_PAGE = 10
+    else:
+        ITEMS_PER_PAGE = int(id)
     page = request.args.get(get_page_parameter(), type=int, default=1)
-    print(page)
-    data = Mails.query.all()
-    pagination = Pagination(page=page, total=len(data),  format_total=True, format_number=True, per_page=ITEMS_PER_PAGE,
+    data = Mails.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
+    pagination = Pagination(page=page, total=27,  format_total=len(data), format_number=True, per_page=ITEMS_PER_PAGE,
                             css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
     return render_template("index.html", page=page, per_page=ITEMS_PER_PAGE, data=data, pagination=pagination)
@@ -42,6 +46,27 @@ def dowload():
                 db.session.add(addMail)
                 db.session.commit()
     return render_template("dowloads.html")
+
+
+@app.route("/send", methods=["POST", "GET"])
+def send():
+    if request.method == "POST":
+        list_id = request.form.get('list_id', "").split(",")
+        for i in list_id:
+            data = Mails.query.filter_by(id=i).first()
+            print(data.mails)
+    return redirect(url_for('index'))
+
+
+@app.route("/delete", methods=["POST", "GET"])
+def delete():
+    if request.method == "POST":
+        list_id = request.form.get('list_id_del', "").split(",")
+        for id_org in list_id:
+            print(id_org)
+            # data = Mails.query.filter_by(id=int(id_org)).first()
+            # print(data.mails)
+    return redirect(url_for('index'))
 
 
 def spamEveryMinute(email, message):
