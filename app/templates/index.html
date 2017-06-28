@@ -1,116 +1,120 @@
 {% extends "layout.html" %}
 {% block title %}Главная страница{% endblock %}
 {% block body %}
-<div class="row">
-    <div class="col-xs-10 col-xs-offset-1">
-        {% if data %}
-        <h3>Список</h3>
-        {{ pagination.info }}
-        {{ pagination.links }}
-        <div id="pagesize" style="font-size: small" align="right">Показывать по <a href="/?id=10"
-                                                                                   style="cursor: pointer">10</a> <a
-                href="/?id=20" style="cursor: pointer">20</a> <a href="/?id=50" style="cursor: pointer">50</a></div>
-        <table class="table table-condensed table-hover" id="example">
-            <thead>
-            <tr>
-                <th><input type="checkbox" id="selectAll"/></th>
-                <th>#</th>
-                <th>Наименование организации</th>
-                <th>Электронная почта</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for object in data %}
-            <tr id="{{object.id}}">
-                <td><input type="checkbox" name="optradio"></td>
-                <td>{{ loop.index + (page - 1) * per_page }}</td>
-                <td>
-                    {{ object.name }}
-                </td>
-                <td>
-                    {{ object.mails }}
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        {{ pagination.links }}<br>
-        <button class="btn btn-success disabled" disabled="disabled" id="button_send">Отправить</button>
-        <button class="btn btn-danger" disabled="disabled" id="button_delete">Удалить</button>
-        <p id="out"></p>
-        {% endif %}
+    <div class="row">
+        <div class="col-xs-10 col-xs-offset-1">
+            {% if data %}
+                <h3>Список</h3>
+                {{ pagination.info }}
+                {{ pagination.links }}
+                <input type="text" id="myInput" class="form-control" onkeyup="Search()" placeholder="Поиск по организациям">
+                <div id="pagesize" style="font-size: small" align="right">Показывать по
+                    <a href="/?id=10" style="cursor: pointer">10</a>
+                    <a href="/?id=20" style="cursor: pointer">20</a>
+                    <a href="/?id=50" style="cursor: pointer">50</a>
+                </div>
+                <table class="table table-condensed table-hover" id="myTable">
+                    <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"/></th>
+                        <th>#</th>
+                        <th>Наименование организации</th>
+                        <th>Электронная почта</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for object in data %}
+                        <tr id="{{ object.id }}">
+                            <td><input type="checkbox" name="optradio"></td>
+                            <td>{{ loop.index + (page - 1) * per_page }}</td>
+                            <td>
+                                {{ object.name }}
+                            </td>
+                            <td>
+                                {{ object.mails }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {{ pagination.links }}<br>
+                <button class="btn btn-success disabled" disabled="disabled" id="button_send">Отправить</button>
+                <button class="btn btn-danger" disabled="disabled" id="button_delete">Удалить</button>
+                <p id="out"></p>
+            {% endif %}
+        </div>
     </div>
-</div>
-<div class="modal fade" tabindex="-1" role="dialog" id="modal-delete">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Подтвердите удаление</h4>
-            </div>
-            <div class="modal-body">
-                <p id="text-modal"></p>
-            </div>
-            <div class="modal-footer">
-                <form method="post">
-                    <input type="hidden" id="list_id_del" name="list_id_del" value="">
-                    <input type="submit" class="btn btn-danger" value="Да">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Нет</button>
-                </form>
+    <div class="modal fade" tabindex="-1" role="dialog" id="modal-delete">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Подтвердите удаление</h4>
+                </div>
+                <div class="modal-body">
+                    <p id="text-modal"></p>
+                </div>
+                <div class="modal-footer">
+                    <form method="post">
+                        <input type="hidden" id="list_id_del" name="list_id_del" value="">
+                        <input type="submit" class="btn btn-danger" value="Да">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Нет</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 
-<div class="modal fade" tabindex="-1" role="dialog" id="modal-send">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Подтвердите отправку почты</h4>
-            </div>
-            <div class="modal-body">
-                <p id="text-org"></p>
-            </div>
-            <div class="modal-footer">
-                <form method="post">
-                    <input type="hidden" id="list_id" name="list_id" value="">
-                    <div class="row">
-                        <div class="col-xs-6">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
+    <div class="modal fade" tabindex="-1" role="dialog" id="modal-send">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Подтвердите отправку почты</h4>
+                </div>
+                <div class="modal-body">
+                    <p id="text-org"></p>
+                </div>
+                <div class="modal-footer">
+                    <form method="post">
+                        <input type="hidden" id="list_id" name="list_id" value="">
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
                                     Доступные шаблоны заданий
                                 </div>
-                                <div class="list-group" id="templates_available">
-                                    {% for t in template %}
-                                    <a href="#" class="list-group-item" data-id="{{ t.id }}" data-value="{{ t.name }}">
-                                        <span>{{ t.name }}</span>
-                                        <div class="badge"></div>
-                                    </a>
-                                    {% endfor %}
+                                    <div class="list-group" id="templates_available">
+                                        {% for t in template %}
+                                            <a href="#" class="list-group-item" data-id="{{ t.id }}"
+                                               data-value="{{ t.name }}">
+                                                <span>{{ t.name }}</span>
+                                                <div class="badge"></div>
+                                            </a>
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-xs-6">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
+                            <div class="col-xs-6">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
                                     Выбранные шаблоны заданий
                                 </div>
-                                <ul class="list-group" id="templates_selected">
-                                </ul>
+                                    <ul class="list-group" id="templates_selected">
+                                    </ul>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <input type="submit" class="btn btn-success" value="Да">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Нет</button>
-                </form>
+                        <input type="submit" class="btn btn-success" value="Да">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Нет</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script type="text/javascript">
+    <script type="text/javascript">
         $('#selectAll').click(function (e) {
             var table = $(e.target).closest('table');
             $('td input:checkbox', table).prop('checked', this.checked);
@@ -118,7 +122,7 @@
         $('#button_send').click(function () {
             var selectedIds = [];
             var selectedName = [];
-            $('#example tr').filter(':has(:checkbox:checked)').each(function () {
+            $('#myTable tr').filter(':has(:checkbox:checked)').each(function () {
                 var i = parseInt($(this).closest('tr').attr('id'));
                 if (!isNaN(i)) {
                     selectedIds.push(i);
@@ -143,7 +147,7 @@
         $('#button_delete').click(function () {
             var selectedIds = [];
             var selectedName = [];
-            $('#example tr').filter(':has(:checkbox:checked)').each(function () {
+            $('#myTable tr').filter(':has(:checkbox:checked)').each(function () {
                 selectedIds.push($(this).closest('tr').attr('id'));
                 if (selectedIds[0] == undefined) {
                     selectedIds.splice(0, 1)
@@ -186,7 +190,7 @@
         };
         $('input[type=checkbox]').change(function () {
             var len = $('input[type=checkbox]:checked').length
-            if (len>0) {
+            if (len > 0) {
                 $('#button_send').attr("disabled", false).removeClass('disabled');
                 $('#button_delete').attr("disabled", false).removeClass('disabled');
             }
@@ -194,14 +198,13 @@
                 $("#button_send").attr("disabled", true).addClass('disabled');
                 $('#button_delete').attr("disabled", true).addClass('disabled');
             }
-{#            selectedIds.push();#}
-{#            console.log(selectedIds)#}
-{#            $.each(selectedIds, function (index, id) {#}
-{#                selectedIds.splice(id,1);#}
-{#            });#}
+            {#            selectedIds.push();#}
+            {#            console.log(selectedIds)#}
+            {#            $.each(selectedIds, function (index, id) {#}
+            {#                selectedIds.splice(id,1);#}
+            {#            });#}
         });
 
-        var isFunc = false;
         function removeTemplate() {
             var $target = $(this);
             var id = $target.data('id');
@@ -214,10 +217,7 @@
             } else {
                 $badge.html(count - 1);
             }
-
-            isFunc=true;
         }
-
         function addTemplate() {
             var $target = $(this);
 
@@ -227,18 +227,29 @@
                 .append($('<span />').html($target.data('value')))
                 .append($input)
                 .appendTo('#templates_selected');
-            isFunc=true;
-            console.log(isFunc)
+        }
+
+        $('#templates_available').on('click', '.list-group-item', addTemplate);
+        $('#templates_selected').on('click', '.list-group-item', removeTemplate);
+
+        function Search() {
+            var input, filter, table, tr, td, i;
+            input = document.getElementById("myInput");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("myTable");
+            tr = table.getElementsByTagName("tr");
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[2];
+                if (td) {
+                    if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
         }
 
 
-        console.log(isFunc)
-        if(isFunc==false) {
-            $('#templates_available').on('click', '.list-group-item', addTemplate);
-            $('#templates_selected').on('click', '.list-group-item', removeTemplate);
-            }
-
-
-
-</script>
+    </script>
 {% endblock %}

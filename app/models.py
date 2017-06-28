@@ -14,15 +14,15 @@ class Mails(db.Model):
 
 
 class TemplateMessage(db.Model):
-	id = db.Column(db.Integer(), primary_key=True)
-	name = db.Column(db.String(500))
-	message = db.Column(db.Text())
-	file = db.Column(db.String(500))
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(500))
+    message = db.Column(db.Text())
+    file = db.Column(db.String(500))
 
-	def __init__(self, name, message, file):
-		self.name = name,
-		self.message = message,
-		self.file = file
+    def __init__(self, name, message, file):
+        self.name = name,
+        self.message = message,
+        self.file = file
 
 
 db.create_all()

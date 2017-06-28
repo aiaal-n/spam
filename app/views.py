@@ -1,20 +1,23 @@
 from flask import json
-import smtplib, re
+import smtplib
 import random, json
 import pyexcel.ext.xls
 from flask_paginate import Pagination, get_page_parameter
 import os
+from os.path import basename
 
-from flask import render_template, request, session, redirect, flash, url_for
+from flask import render_template, request, redirect, url_for
 
 from app import app
-from datetime import datetime
 from app.models import Mails, db, TemplateMessage
 from sqlalchemy import update
 
 
 from email.header import Header
 from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email import encoders
 from validate_email import validate_email
 
 app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
@@ -25,7 +28,7 @@ app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 @app.route('/', methods=["POST", "GET"])
 def index():
     id = request.args.get('id')
-    if id == None:
+    if id is None:
         ITEMS_PER_PAGE = 10
     else:
         ITEMS_PER_PAGE = int(id)
@@ -61,11 +64,10 @@ def send():
         list_id = request.form.get('list_id', "").split(",")
         message_id = request.form.get('template')
         print(message_id)
-        # message = TemplateMessage.query.filter_by(id=message_id).first()
-        # print(message.message)
+        message = TemplateMessage.query.filter_by(id=message_id).first()
         for i in list_id:
             data = Mails.query.filter_by(id=i).first()
-            print(data.mails)
+            sendMessage(data.mails, message.name + ' ' + data.name, message.message, message.file)
     return redirect(url_for('index'))
 
 
@@ -146,20 +148,30 @@ def templateDelete():
     if id is None:
         return '', 404
     a = TemplateMessage.query.filter_by(id=id).first()
-    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], a.file))
+    if a.file != '':
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], a.file))
     db.session.delete(a)
     db.session.commit()
     return redirect(url_for('template'))
 
 
-def sendMessage(email, message):
+def sendMessage(email, subject, message, files):
     with open('data.json') as data_file:
         data = json.load(data_file)
-    msg = MIMEText(message, 'plain', 'utf-8')
-    thread_number = random.randint(0, 10000)
-    msg['Subject'] = Header('Minutely Spam Report (randomizer: ' + str(thread_number) + ')', 'utf-8')
+    msg = MIMEMultipart()
+    msg['Subject'] = Header(subject, 'utf-8')
     msg['From'] = data['email']
-    msg['To'] = ', '.join(email)
+    msg['To'] = email
+
+    msg.attach(MIMEText(message, 'plain', 'utf-8'))
+    path = os.path.join(app.config['UPLOAD_FOLDER'], files)
+
+    with open(path, 'rb') as fp:
+        part = MIMEBase('application', "octet-stream")
+        part.set_payload(fp.read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', 'attachment', filename=files)
+    msg.attach(part)
 
     s = smtplib.SMTP(host='smtp.gmail.com', port=587)
     s.ehlo()
@@ -168,5 +180,4 @@ def sendMessage(email, message):
     s.login(data['email'], data['password'])
     s.sendmail(data['email'], email, msg.as_string())
 
-    print("Email sent to: " + ', '.join(email))
     s.quit()
