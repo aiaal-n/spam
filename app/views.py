@@ -1,4 +1,7 @@
-from flask import json
+import builtins
+import socket
+
+from flask import json, flash
 import smtplib
 import random, json
 import pyexcel.ext.xls
@@ -22,8 +25,6 @@ from validate_email import validate_email
 
 app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
-
-# ITEMS_PER_PAGE = 10
 
 @app.route('/', methods=["POST", "GET"])
 def index():
@@ -50,8 +51,8 @@ def dowload():
             return "No file"
         sheet = pyexcel.get_sheet(file_type="xlsx", file_content=file)
         for column in sheet.row:
-            if validate_email(column[2]):
-                addMail = Mails(name=column[1], mails=column[2])
+            if validate_email(column[6]):
+                addMail = Mails(name=column[1], mails=column[6])
                 db.session.add(addMail)
                 db.session.commit()
         return render_template("dowloads.html", message='Успешно загружено')
@@ -63,11 +64,10 @@ def send():
     if request.method == "POST":
         list_id = request.form.get('list_id', "").split(",")
         message_id = request.form.get('template')
-        print(message_id)
         message = TemplateMessage.query.filter_by(id=message_id).first()
         for i in list_id:
             data = Mails.query.filter_by(id=i).first()
-            sendMessage(data.mails, message.name + ' ' + data.name, message.message, message.file)
+            sendMessage(data.mails, message.name, message.message, message.file)
     return redirect(url_for('index'))
 
 
@@ -164,20 +164,32 @@ def sendMessage(email, subject, message, files):
     msg['To'] = email
 
     msg.attach(MIMEText(message, 'plain', 'utf-8'))
-    path = os.path.join(app.config['UPLOAD_FOLDER'], files)
+    if files != '':
+        path = os.path.join(app.config['UPLOAD_FOLDER'], files)
 
-    with open(path, 'rb') as fp:
-        part = MIMEBase('application', "octet-stream")
-        part.set_payload(fp.read())
-    encoders.encode_base64(part)
-    part.add_header('Content-Disposition', 'attachment', filename=files)
-    msg.attach(part)
-
-    s = smtplib.SMTP(host='smtp.gmail.com', port=587)
+        with open(path, 'rb') as fp:
+            part = MIMEBase('application', "octet-stream")
+            part.set_payload(fp.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', 'attachment', filename=files)
+        msg.attach(part)
+    try:
+        s = smtplib.SMTP(host='smtp.gmail.com', port=587)  #mail.nic.ru
+    except builtins.TimeoutError:
+        flash('Не правильно введен порт')
+        return url_for('index')
+    except socket.gaierror:
+        flash('Не правильно введен хост')
+        return url_for('index')
     s.ehlo()
     s.starttls()
     s.ehlo()
-    s.login(data['email'], data['password'])
+    try:
+        s.login(data['email'], data['password'])
+    except smtplib.SMTPAuthenticationError:
+        flash("Не правильно введена почта или пароль.")
+        return url_for('index')
+    print(email)
     s.sendmail(data['email'], email, msg.as_string())
 
     s.quit()
