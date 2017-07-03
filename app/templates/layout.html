@@ -27,7 +27,7 @@
                 <div class="navbar-header navbar-right">
                     <ul class="nav navbar-nav">
                         {% if 'email' in session: %}
-                        <li><a>{{ session['email'] }}</a></li>
+                        <li><a href="/profile">{{ session['email'] }}</a></li>
                         <li><a href="/logout">Выход</a></li>
                         {% else %}
                         <li><a href="/login">Вход</a></li>

@@ -32,12 +32,14 @@ class User(db.Model):
     host = db.Column(db.String(100))
     port = db.Column(db.String(100))
     password = db.Column(db.String(100))
+    cpassword = db.Column(db.String(100))
 
 
-    def __init__(self, email, host, port, password):
+    def __init__(self, email, host, port, password, cpassword):
         self.email = email
         self.host = host
         self.port = port
+        self.cpassword = cpassword
         self.set_password(password)
 
     def set_password(self, password):

@@ -84,7 +84,7 @@ def register():
             return redirect(url_for('register'))
         else:
             if (password == cpassword):
-                user = User(email=email, host=host, port=port, password=password)
+                user = User(email=email, host=host, port=port, password=password, cpassword=cpassword)
                 db.session.add(user)
                 db.session.commit()
                 return redirect(url_for("login"))
@@ -93,6 +93,32 @@ def register():
                 return redirect(url_for('register'))
 
     return render_template('registration.html')
+
+
+@app.route("/login", methods=['POST', 'GET'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        loginSite = User.query.filter_by(email=email).first()
+        if loginSite:
+            if loginSite is None:
+                flash("Неправильно введен логин")
+                return redirect(url_for('login'))
+            else:
+                if loginSite.check_password(password):
+                    session['email'] = loginSite.email
+                    session['port'] = loginSite.port
+                    session['host'] = loginSite.host
+                    session['id'] = loginSite.id
+                    return redirect('/')
+                else:
+                    flash("Неправильно введен пароль")
+                    return redirect(url_for('login'))
+        else:
+            flash("Неправильно введена почта")
+            return redirect(url_for('login'))
+    return render_template('login.html')
 
 
 @app.route('/logout')
@@ -247,9 +273,8 @@ def sendMessage(email, subject, message, files):
         s.ehlo()
         s.starttls()
         s.ehlo()
-        print(loginSite.set_password(loginSite.password))
         try:
-            s.login(loginSite.email, loginSite.password)
+            s.login(loginSite.email, loginSite.cpassword)
         except smtplib.SMTPAuthenticationError:
             flash("Не правильно введена почта или пароль.")
             return url_for('index')
