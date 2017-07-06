@@ -95,30 +95,24 @@ def register():
     return render_template('registration.html')
 
 
-@app.route("/login", methods=['POST', 'GET'])
-def login():
+@app.route("/profile", methods=['POST', 'GET'])
+def profile():
+    data = User.query.filter_by(email=session['email']).first()
     if request.method == 'POST':
+        host = request.form['host']
+        port = request.form['port']
         email = request.form['email']
         password = request.form['password']
-        loginSite = User.query.filter_by(email=email).first()
-        if loginSite:
-            if loginSite is None:
-                flash("Неправильно введен логин")
-                return redirect(url_for('login'))
-            else:
-                if loginSite.check_password(password):
-                    session['email'] = loginSite.email
-                    session['port'] = loginSite.port
-                    session['host'] = loginSite.host
-                    session['id'] = loginSite.id
-                    return redirect('/')
-                else:
-                    flash("Неправильно введен пароль")
-                    return redirect(url_for('login'))
+        cpassword = request.form['cpassword']
+        if (password == cpassword):
+            message = update(User).where(User.email == session['email']).values(email=email, host=host, port=port, cpassword=cpassword)
+            db.session.execute(message)
+            db.session.commit()
+            return redirect(url_for('profile'))
         else:
-            flash("Неправильно введена почта")
-            return redirect(url_for('login'))
-    return render_template('login.html')
+            flash("Пароли не совпадают!")
+            return redirect(url_for('profile'))
+    return render_template('profile.html', data=data)
 
 
 @app.route('/logout')
@@ -131,13 +125,15 @@ def logout():
 @app.route("/dowload", methods=["POST", "GET"])
 def dowload():
     if request.method == "POST":
+        columnNameOrg = request.form['column1']
+        columnEmail = request.form['column2']
         file = request.files['inputFile'].read()
         if not file:
             return "No file"
         sheet = pyexcel.get_sheet(file_type="xlsx", file_content=file)
         for column in sheet.row:
-            if validate_email(column[6]):
-                addMail = Mails(name=column[1], mails=column[6])
+            if validate_email(column[int(columnEmail)-1]):
+                addMail = Mails(name=column[int(columnNameOrg)-1], mails=column[int(columnEmail)-1])
                 db.session.add(addMail)
                 db.session.commit()
         return render_template("dowloads.html", message='Успешно загружено')

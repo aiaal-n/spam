@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block title %}Профиль{% endblock %}
+{% block body %}
+<div class="row">
+    <div class="col-xs-6 col-xs-offset-3">
+        <form id="formReg" method="post">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-danger" name="AlertForm" role="alert"><strong>Ошибка!</strong>{{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+            <h3>Профиль</h3>
+            <div class="form-group">
+                <label>Электронная почта</label>
+                <input type="email" class="form-control" name="email" value="{{ data.email }}" required placeholder="Электронная почта">
+            </div>
+            <div class="row">
+                <div class="col-xs-6">
+                    <div class="form-group">
+                        <label>Хост</label>
+                        <input type="text" class="form-control" name="host" value="{{data.host}}" required placeholder="Хост">
+                    </div>
+                </div>
+                <div class="col-xs-6">
+                    <div class="form-group">
+                        <label>Порт</label>
+                        <input type="text" class="form-control" name="port" value="{{data.port}}" required placeholder="Порт">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" class="form-control" value="{{data.cpassword}}" name="password" required placeholder="Пароль">
+            </div>
+            <div class="form-group">
+                <label>Повторно введите пароль</label>
+                <input type="password" class="form-control" value="{{data.cpassword}}" name="cpassword" required
+                       placeholder="Повторно введите пароль">
+            </div>
+            <button type="submit" class="btn btn-success">Изменить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
