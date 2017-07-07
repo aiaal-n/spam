@@ -95,6 +95,29 @@ def register():
     return render_template('registration.html')
 
 
+<<<<<<< HEAD
+=======
+@app.route("/profile", methods=['POST', 'GET'])
+def profile():
+    data = User.query.filter_by(email=session['email']).first()
+    if request.method == 'POST':
+        host = request.form['host']
+        port = request.form['port']
+        email = request.form['email']
+        password = request.form['password']
+        cpassword = request.form['cpassword']
+        if (password == cpassword):
+            message = update(User).where(User.email == session['email']).values(email=email, host=host, port=port, cpassword=cpassword)
+            db.session.execute(message)
+            db.session.commit()
+            return redirect(url_for('profile'))
+        else:
+            flash("Пароли не совпадают!")
+            return redirect(url_for('profile'))
+    return render_template('profile.html', data=data)
+
+
+>>>>>>> 368c50e3894ee596f98557545ccbfd203fc5da3d
 @app.route('/logout')
 def logout():
     # удалить из сессии имя пользователя, если оно там есть
@@ -105,13 +128,15 @@ def logout():
 @app.route("/dowload", methods=["POST", "GET"])
 def dowload():
     if request.method == "POST":
+        columnNameOrg = request.form['column1']
+        columnEmail = request.form['column2']
         file = request.files['inputFile'].read()
         if not file:
             return "No file"
         sheet = pyexcel.get_sheet(file_type="xlsx", file_content=file)
         for column in sheet.row:
-            if validate_email(column[6]):
-                addMail = Mails(name=column[1], mails=column[6])
+            if validate_email(column[int(columnEmail)-1]):
+                addMail = Mails(name=column[int(columnNameOrg)-1], mails=column[int(columnEmail)-1])
                 db.session.add(addMail)
                 db.session.commit()
         return render_template("dowloads.html", message='Успешно загружено')
@@ -229,6 +254,7 @@ def sendMessage(email, subject, message, files):
         msg.attach(MIMEText(message, 'plain', 'utf-8'))
         if files != '':
             path = os.path.join(app.config['UPLOAD_FOLDER'], files)
+<<<<<<< HEAD
 
             with open(path, 'rb') as fp:
                 part = MIMEBase('application', "octet-stream")
@@ -258,6 +284,34 @@ def sendMessage(email, subject, message, files):
         print(email)
         s.sendmail(loginSite.email, email, msg.as_string())
 
+=======
+
+            with open(path, 'rb') as fp:
+                part = MIMEBase('application', "octet-stream")
+                part.set_payload(fp.read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', 'attachment', filename=files)
+            msg.attach(part)
+        try:
+            s = smtplib.SMTP(host=loginSite.host, port=loginSite.port)  # mail.nic.ru
+        except builtins.TimeoutError:
+            flash('Не правильно введен порт')
+            return url_for('index')
+        except socket.gaierror:
+            flash('Не правильно введен хост')
+            return url_for('index')
+        s.ehlo()
+        s.starttls()
+        s.ehlo()
+        try:
+            s.login(loginSite.email, loginSite.cpassword)
+        except smtplib.SMTPAuthenticationError:
+            flash("Не правильно введена почта или пароль.")
+            return url_for('index')
+        print(email)
+        s.sendmail(loginSite.email, email, msg.as_string())
+
+>>>>>>> 368c50e3894ee596f98557545ccbfd203fc5da3d
         s.quit()
     else:
         flash('Вход не выполнен')
