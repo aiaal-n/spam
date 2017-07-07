@@ -1,7 +1,7 @@
 import builtins
 import socket
 
-from flask import json, flash
+from flask import json, flash, session
 import smtplib
 import random, json
 import pyexcel.ext.xls
@@ -12,9 +12,8 @@ from os.path import basename
 from flask import render_template, request, redirect, url_for
 
 from app import app
-from app.models import Mails, db, TemplateMessage
+from app.models import Mails, db, TemplateMessage, User
 from sqlalchemy import update
-
 
 from email.header import Header
 from email.mime.text import MIMEText
@@ -37,10 +36,70 @@ def index():
     template = TemplateMessage.query.all()
     data_len = Mails.query.all()
     data = Mails.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
-    pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True, per_page=ITEMS_PER_PAGE,
+    pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
+                            per_page=ITEMS_PER_PAGE,
                             css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
-    return render_template("index.html", page=page, template=template, per_page=ITEMS_PER_PAGE, data=data, pagination=pagination)
+    return render_template("index.html", page=page, template=template, per_page=ITEMS_PER_PAGE, data=data,
+                           pagination=pagination)
+
+
+@app.route("/login", methods=['POST', 'GET'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        loginSite = User.query.filter_by(email=email).first()
+        if loginSite:
+            if loginSite is None:
+                flash("Неправильно введен логин")
+                return redirect(url_for('login'))
+            else:
+                if loginSite.check_password(password):
+                    session['email'] = loginSite.email
+                    session['port'] = loginSite.port
+                    session['host'] = loginSite.host
+                    session['id'] = loginSite.id
+                    return redirect('/')
+                else:
+                    flash("Неправильно введен пароль")
+                    return redirect(url_for('login'))
+        else:
+            flash("Неправильно введена почта")
+            return redirect(url_for('login'))
+    return render_template('login.html')
+
+
+@app.route("/register", methods=["POST", "GET"])
+def register():
+    if request.method == 'POST':
+        host = request.form['host']
+        port = request.form['port']
+        email = request.form['email']
+        password = request.form['password']
+        cpassword = request.form['cpassword']
+        loginSite = User.query.filter_by(email=email).first()
+        if loginSite:
+            flash("Логин занят")
+            return redirect(url_for('register'))
+        else:
+            if (password == cpassword):
+                user = User(email=email, host=host, port=port, password=password, cpassword=cpassword)
+                db.session.add(user)
+                db.session.commit()
+                return redirect(url_for("login"))
+            else:
+                flash("Пароли не совпадают!")
+                return redirect(url_for('register'))
+
+    return render_template('registration.html')
+
+
+@app.route('/logout')
+def logout():
+    # удалить из сессии имя пользователя, если оно там есть
+    session.pop('email', None)
+    return redirect('/')
 
 
 @app.route("/dowload", methods=["POST", "GET"])
@@ -93,7 +152,8 @@ def template():
     data_len = TemplateMessage.query.all()
     page = request.args.get(get_page_parameter(), type=int, default=1)
     data = TemplateMessage.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
-    pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True, per_page=ITEMS_PER_PAGE,
+    pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
+                            per_page=ITEMS_PER_PAGE,
                             css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
     return render_template("template.html", page=page, per_page=ITEMS_PER_PAGE, data=data, pagination=pagination)
@@ -156,40 +216,49 @@ def templateDelete():
 
 
 def sendMessage(email, subject, message, files):
-    with open('data.json') as data_file:
-        data = json.load(data_file)
-    msg = MIMEMultipart()
-    msg['Subject'] = Header(subject, 'utf-8')
-    msg['From'] = data['email']
-    msg['To'] = email
+    if 'email' in session:
+        loginSite = User.query.filter_by(email=session['email']).first()
+        if loginSite == False:
+            flash('Вход не выполнен')
+            return url_for('index')
+        msg = MIMEMultipart()
+        msg['Subject'] = Header(subject, 'utf-8')
+        msg['From'] = loginSite.email
+        msg['To'] = email
 
-    msg.attach(MIMEText(message, 'plain', 'utf-8'))
-    if files != '':
-        path = os.path.join(app.config['UPLOAD_FOLDER'], files)
+        msg.attach(MIMEText(message, 'plain', 'utf-8'))
+        if files != '':
+            path = os.path.join(app.config['UPLOAD_FOLDER'], files)
 
-        with open(path, 'rb') as fp:
-            part = MIMEBase('application', "octet-stream")
-            part.set_payload(fp.read())
-        encoders.encode_base64(part)
-        part.add_header('Content-Disposition', 'attachment', filename=files)
-        msg.attach(part)
-    try:
-        s = smtplib.SMTP(host='smtp.gmail.com', port=587)  #mail.nic.ru
-    except builtins.TimeoutError:
-        flash('Не правильно введен порт')
-        return url_for('index')
-    except socket.gaierror:
-        flash('Не правильно введен хост')
-        return url_for('index')
-    s.ehlo()
-    s.starttls()
-    s.ehlo()
-    try:
-        s.login(data['email'], data['password'])
-    except smtplib.SMTPAuthenticationError:
-        flash("Не правильно введена почта или пароль.")
-        return url_for('index')
-    print(email)
-    s.sendmail(data['email'], email, msg.as_string())
+            with open(path, 'rb') as fp:
+                part = MIMEBase('application', "octet-stream")
+                part.set_payload(fp.read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', 'attachment', filename=files)
+            msg.attach(part)
+        try:
+            s = smtplib.SMTP(host=loginSite.host, port=loginSite.port, timeout=500)  # mail.nic.ru
+        except smtplib.SMTPServerDisconnected:
+            flash('Сервер недоступен')
+            return url_for('index')
+        except builtins.TimeoutError:
+            flash('Не правильно введен порт')
+            return url_for('index')
+        except socket.gaierror:
+            flash('Не правильно введен хост')
+            return url_for('index')
+        s.ehlo()
+        s.starttls()
+        s.ehlo()
+        try:
+            s.login(loginSite.email, loginSite.cpassword)
+        except smtplib.SMTPAuthenticationError:
+            flash("Не правильно введена почта или пароль.")
+            return url_for('index')
+        print(email)
+        s.sendmail(loginSite.email, email, msg.as_string())
 
-    s.quit()
+        s.quit()
+    else:
+        flash('Вход не выполнен')
+        return url_for('index')

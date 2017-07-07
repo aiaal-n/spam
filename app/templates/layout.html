@@ -20,10 +20,20 @@
         <div class="container-fluid">
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
-                    <li class=><a href="/">Главная страница</a></li>
+                    <li><a href="/">Главная страница</a></li>
                     <li><a href="/dowload">Загрузить</a></li>
                     <li><a href="/template">Шаблоны</a></li>
                 </ul>
+                <div class="navbar-header navbar-right">
+                    <ul class="nav navbar-nav">
+                        {% if 'email' in session: %}
+                        <li><a href="/profile">{{ session['email'] }}</a></li>
+                        <li><a href="/logout">Выход</a></li>
+                        {% else %}
+                        <li><a href="/login">Вход</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
@@ -31,13 +41,13 @@
 </head>
 <body>
 {% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class=flashes>
+{% if messages %}
+<ul class=flashes>
     {% for message in messages %}
-      <div class="alert alert-danger" name="AlertForm" role="alert"><strong>Ошибка!</strong>{{ message }} </div>
+    <div class="alert alert-danger" name="AlertForm" role="alert"><strong>Ошибка!</strong>{{ message }}</div>
     {% endfor %}
-    </ul>
-  {% endif %}
+</ul>
+{% endif %}
 {% endwith %}
 {% block body %}{% endblock %}
 </body>
