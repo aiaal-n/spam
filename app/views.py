@@ -1,13 +1,11 @@
 import builtins
 import socket
 
-from flask import json, flash, session
+from flask import flash, session
 import smtplib
-import random, json
-import pyexcel.ext.xls
 from flask_paginate import Pagination, get_page_parameter
 import os
-from os.path import basename
+import pyexcel
 
 from flask import render_template, request, redirect, url_for
 
@@ -27,20 +25,20 @@ app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
 @app.route('/', methods=["POST", "GET"])
 def index():
-    id = request.args.get('id')
-    if id is None:
+    page_id = request.args.get('id')
+    if page_id is None:
         ITEMS_PER_PAGE = 10
     else:
-        ITEMS_PER_PAGE = int(id)
+        ITEMS_PER_PAGE = int(page_id)
     page = request.args.get(get_page_parameter(), type=int, default=1)
-    template = TemplateMessage.query.all()
+    template_message = TemplateMessage.query.all()
     data_len = Mails.query.all()
     data = Mails.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
     pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
                             per_page=ITEMS_PER_PAGE,
                             css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
-    return render_template("index.html", page=page, template=template, per_page=ITEMS_PER_PAGE, data=data,
+    return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
                            pagination=pagination)
 
 
@@ -83,7 +81,7 @@ def register():
             flash("Логин занят")
             return redirect(url_for('register'))
         else:
-            if (password == cpassword):
+            if password == cpassword:
                 user = User(email=email, host=host, port=port, password=password, cpassword=cpassword)
                 db.session.add(user)
                 db.session.commit()
@@ -104,7 +102,7 @@ def profile():
         email = request.form['email']
         password = request.form['password']
         cpassword = request.form['cpassword']
-        if (password == cpassword):
+        if password == cpassword:
             message = update(User).where(User.email == session['email']).values(email=email, host=host, port=port, cpassword=cpassword)
             db.session.execute(message)
             db.session.commit()
@@ -132,11 +130,18 @@ def dowload():
             return "No file"
         sheet = pyexcel.get_sheet(file_type="xlsx", file_content=file)
         for column in sheet.row:
-            if validate_email(column[int(columnEmail)-1]):
-                addMail = Mails(name=column[int(columnNameOrg)-1], mails=column[int(columnEmail)-1])
-                db.session.add(addMail)
-                db.session.commit()
-        return render_template("dowloads.html", message='Успешно загружено')
+            try:
+                if validate_email(column[int(columnEmail)-1]):
+                    addMail = Mails(name=column[int(columnNameOrg)-1], mails=column[int(columnEmail)-1])
+                    db.session.add(addMail)
+                    db.session.commit()
+            except builtins.TypeError:
+                flash('Выбрана не правильная колонна')
+                return redirect(url_for('dowload'))
+            except builtins.IndexError:
+                flash('Выбрана не правильная колонна')
+                return redirect(url_for('dowload'))
+        return redirect(url_for('index'))
     return render_template("dowloads.html")
 
 
@@ -148,7 +153,7 @@ def send():
         message = TemplateMessage.query.filter_by(id=message_id).first()
         for i in list_id:
             data = Mails.query.filter_by(id=i).first()
-            sendMessage(data.mails, message.name, message.message, message.file)
+            send_message(data.mails, message.name, message.message, message.file)
     return redirect(url_for('index'))
 
 
@@ -166,11 +171,11 @@ def delete():
 
 @app.route("/template", methods=["GET"])
 def template():
-    id = request.args.get('id')
-    if id == None:
+    page_id = request.args.get('id')
+    if page_id is None:
         ITEMS_PER_PAGE = 10
     else:
-        ITEMS_PER_PAGE = int(id)
+        ITEMS_PER_PAGE = int(page_id)
     data_len = TemplateMessage.query.all()
     page = request.args.get(get_page_parameter(), type=int, default=1)
     data = TemplateMessage.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
@@ -182,7 +187,7 @@ def template():
 
 
 @app.route("/template/create", methods=["POST", "GET"])
-def templateCreate():
+def template_create():
     if request.method == 'POST':
         name = request.form.get('name')
         mess = request.form.get('message')
@@ -200,7 +205,7 @@ def templateCreate():
 
 
 @app.route("/template/update/", methods=["POST", "GET"])
-def templateUpdate():
+def template_update():
     id = request.args.get('id')
     if id is None:
         return '', 404
@@ -210,7 +215,7 @@ def templateUpdate():
         mess = request.form.get('message')
         file = request.files['inputFile']
         if file.filename == '':
-            if (data.file != ''):
+            if data.file != '':
                 filename = data.file
             else:
                 filename = ''
@@ -225,7 +230,7 @@ def templateUpdate():
 
 
 @app.route("/template/delete/", methods=["POST", "GET"])
-def templateDelete():
+def template_delete():
     id = request.args.get('id')
     if id is None:
         return '', 404
@@ -237,7 +242,7 @@ def templateDelete():
     return redirect(url_for('template'))
 
 
-def sendMessage(email, subject, message, files):
+def send_message(email, subject, message, files):
     if 'email' in session:
         loginSite = User.query.filter_by(email=session['email']).first()
         if not loginSite:
