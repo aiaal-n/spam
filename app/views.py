@@ -95,8 +95,6 @@ def register():
     return render_template('registration.html')
 
 
-<<<<<<< HEAD
-=======
 @app.route("/profile", methods=['POST', 'GET'])
 def profile():
     data = User.query.filter_by(email=session['email']).first()
@@ -117,7 +115,6 @@ def profile():
     return render_template('profile.html', data=data)
 
 
->>>>>>> 368c50e3894ee596f98557545ccbfd203fc5da3d
 @app.route('/logout')
 def logout():
     # удалить из сессии имя пользователя, если оно там есть
@@ -243,7 +240,7 @@ def templateDelete():
 def sendMessage(email, subject, message, files):
     if 'email' in session:
         loginSite = User.query.filter_by(email=session['email']).first()
-        if loginSite == False:
+        if not loginSite:
             flash('Вход не выполнен')
             return url_for('index')
         msg = MIMEMultipart()
@@ -254,8 +251,6 @@ def sendMessage(email, subject, message, files):
         msg.attach(MIMEText(message, 'plain', 'utf-8'))
         if files != '':
             path = os.path.join(app.config['UPLOAD_FOLDER'], files)
-<<<<<<< HEAD
-
             with open(path, 'rb') as fp:
                 part = MIMEBase('application', "octet-stream")
                 part.set_payload(fp.read())
@@ -263,7 +258,7 @@ def sendMessage(email, subject, message, files):
             part.add_header('Content-Disposition', 'attachment', filename=files)
             msg.attach(part)
         try:
-            s = smtplib.SMTP(host=loginSite.host, port=loginSite.port, timeout=500)  # mail.nic.ru
+            s = smtplib.SMTP(host=loginSite.host, port=loginSite.port)  # mail.nic.ru
         except smtplib.SMTPServerDisconnected:
             flash('Сервер недоступен')
             return url_for('index')
@@ -283,35 +278,6 @@ def sendMessage(email, subject, message, files):
             return url_for('index')
         print(email)
         s.sendmail(loginSite.email, email, msg.as_string())
-
-=======
-
-            with open(path, 'rb') as fp:
-                part = MIMEBase('application', "octet-stream")
-                part.set_payload(fp.read())
-            encoders.encode_base64(part)
-            part.add_header('Content-Disposition', 'attachment', filename=files)
-            msg.attach(part)
-        try:
-            s = smtplib.SMTP(host=loginSite.host, port=loginSite.port)  # mail.nic.ru
-        except builtins.TimeoutError:
-            flash('Не правильно введен порт')
-            return url_for('index')
-        except socket.gaierror:
-            flash('Не правильно введен хост')
-            return url_for('index')
-        s.ehlo()
-        s.starttls()
-        s.ehlo()
-        try:
-            s.login(loginSite.email, loginSite.cpassword)
-        except smtplib.SMTPAuthenticationError:
-            flash("Не правильно введена почта или пароль.")
-            return url_for('index')
-        print(email)
-        s.sendmail(loginSite.email, email, msg.as_string())
-
->>>>>>> 368c50e3894ee596f98557545ccbfd203fc5da3d
         s.quit()
     else:
         flash('Вход не выполнен')
