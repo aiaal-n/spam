@@ -169,6 +169,34 @@ def delete():
     return redirect(url_for('index'))
 
 
+@app.route("/create", methods=["POST", "GET"])
+def create():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        message = Mails(name=name, mails=email)
+        db.session.add(message)
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('create.html')
+
+
+@app.route("/update/", methods=["POST", "GET"])
+def update():
+    id = request.args.get('id')
+    if id is None:
+        return '', 404
+    data = Mails.query.filter_by(id=id).first()
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        message = update(Mails).where(Mails.id == id).values(name=name, mails=email)
+        db.session.execute(message)
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('create.html', data=data)
+
+
 @app.route("/template", methods=["GET"])
 def template():
     page_id = request.args.get('id')
