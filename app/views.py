@@ -182,7 +182,7 @@ def create():
 
 
 @app.route("/update/", methods=["POST", "GET"])
-def update():
+def update_org():
     id = request.args.get('id')
     if id is None:
         return '', 404
@@ -281,7 +281,7 @@ def send_message(email, subject, message, files):
         msg['From'] = loginSite.email
         msg['To'] = email
 
-        msg.attach(MIMEText(message, 'plain', 'utf-8'))
+        msg.attach(MIMEText(message.encode('utf-8'), 'plain', 'utf-8'))
         if files != '':
             path = os.path.join(app.config['UPLOAD_FOLDER'], files)
             with open(path, 'rb') as fp:
