@@ -24,6 +24,14 @@
                 </div>
             </div>
             <div class="form-group">
+                <label>Группа</label>
+                <select class="form-control">
+                    {% for gr in groups %}
+                    <option value="{{ gr.id }}">{{ gr.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="exampleInputFile">Выберите файл</label>
                 <input type="file" id='exampleInputFile' name="inputFile">
                 <p class="help-block">Выберите excel файл.</p>

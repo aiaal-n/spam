@@ -13,6 +13,14 @@
                 <label>Электронная почта</label>
                 <input type="email" placeholder="Электронная почта" class="form-control" required name="email" value="{{ data.mails }}">
             </div>
+            <div class="form-group">
+                <label>Группа</label>
+                <select class="form-control" name="groups">
+                    {% for gr in groups %}
+                    <option value="{{gr.id}}">{{ gr.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <button type="submit" class="btn btn-primary">Сохранить</button>
             <a href="/" class="btn btn-default">Отмена</a>
         </form>
@@ -25,6 +33,14 @@
             <div class="form-group">
                 <label>Электронная почта</label>
                 <input type="email" placeholder="Электронная почта" class="form-control" required name="email">
+            </div>
+            <div class="form-group">
+                <label>Группа</label>
+                <select class="form-control" name="groups">
+                    {% for gr in groups %}
+                    <option value="{{gr.id}}">{{ gr.name}}</option>
+                    {% endfor %}
+                </select>
             </div>
             <button type="submit" class="btn btn-primary">Сохранить</button>
             <a href="/" class="btn btn-default">Отмена</a>

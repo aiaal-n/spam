@@ -8,10 +8,21 @@ class Mails(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.Text())
     mails = db.Column(db.Text())
+    group_id = db.Column(db.Integer())
 
-    def __init__(self, name, mails):
+    def __init__(self, name, mails, group_id):
         self.name = name
         self.mails = mails
+        self.group_id = group_id
+
+
+class Groups(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.Text())
+
+    def __init__(self, name):
+        self.name = name
+
 
 
 class TemplateMessage(db.Model):

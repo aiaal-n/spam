@@ -10,7 +10,7 @@ import pyexcel
 from flask import render_template, request, redirect, url_for
 
 from app import app
-from app.models import Mails, db, TemplateMessage, User
+from app.models import Mails, db, TemplateMessage, User, Groups
 from sqlalchemy import update
 
 from email.header import Header
@@ -122,6 +122,7 @@ def logout():
 
 @app.route("/dowload", methods=["POST", "GET"])
 def dowload():
+    groups = Groups.query.all()
     if request.method == "POST":
         columnNameOrg = request.form['column1']
         columnEmail = request.form['column2']
@@ -142,7 +143,7 @@ def dowload():
                 flash('Выбрана не правильная колонна')
                 return redirect(url_for('dowload'))
         return redirect(url_for('index'))
-    return render_template("dowloads.html")
+    return render_template("dowloads.html", groups=groups)
 
 
 @app.route("/send", methods=["POST", "GET"])
@@ -171,18 +172,21 @@ def delete():
 
 @app.route("/create", methods=["POST", "GET"])
 def create():
+    groups = Groups.query.all()
     if request.method == 'POST':
         name = request.form.get('name')
         email = request.form.get('email')
-        message = Mails(name=name, mails=email)
+        groups = request.form.get('groups')
+        message = Mails(name=name, mails=email, group_id=groups)
         db.session.add(message)
         db.session.commit()
         return redirect(url_for('index'))
-    return render_template('create.html')
+    return render_template('create.html', groups=groups)
 
 
 @app.route("/update/", methods=["POST", "GET"])
 def update_org():
+    groups = Groups.query.all()
     id = request.args.get('id')
     if id is None:
         return '', 404
@@ -190,11 +194,12 @@ def update_org():
     if request.method == 'POST':
         name = request.form.get('name')
         email = request.form.get('email')
-        message = update(Mails).where(Mails.id == id).values(name=name, mails=email)
+        groups = request.form.get('groups')
+        message = update(Mails).where(Mails.id == id).values(name=name, mails=email, group_id=groups)
         db.session.execute(message)
         db.session.commit()
         return redirect(url_for('index'))
-    return render_template('create.html', data=data)
+    return render_template('create.html', data=data, groups=groups)
 
 
 @app.route("/template", methods=["GET"])
@@ -268,6 +273,60 @@ def template_delete():
     db.session.delete(a)
     db.session.commit()
     return redirect(url_for('template'))
+
+
+@app.route("/groups", methods=["POST", "GET"])
+def groups():
+    page_id = request.args.get('id')
+    if page_id is None:
+        ITEMS_PER_PAGE = 10
+    else:
+        ITEMS_PER_PAGE = int(page_id)
+    data_len = Groups.query.all()
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    data = Groups.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
+    pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
+                            per_page=ITEMS_PER_PAGE,
+                            css_framework='bootstrap3', active_url='users-page-url', record_name='data')
+
+    return render_template("groups.html", page=page, per_page=ITEMS_PER_PAGE, data=data, pagination=pagination)
+
+
+@app.route("/groups/create", methods=["POST", "GET"])
+def groups_create():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        message = Groups(name=name)
+        db.session.add(message)
+        db.session.commit()
+        return redirect('/groups')
+    return render_template('groupsCreate.html')
+
+
+@app.route("/groups/update/", methods=["POST", "GET"])
+def groups_update():
+    id = request.args.get('id')
+    if id is None:
+        return '', 404
+    data = Groups.query.filter_by(id=id).first()
+    if request.method == 'POST':
+        name = request.form.get('name')
+        message = update(Groups).where(Groups.id == id).values(name=name)
+        db.session.execute(message)
+        db.session.commit()
+        return redirect('/groups')
+    return render_template('groupsUpdate.html', data=data)
+
+
+@app.route("/groups/delete/", methods=["POST", "GET"])
+def groups_delete():
+    id = request.args.get('id')
+    if id is None:
+        return '', 404
+    a = Groups.query.filter_by(id=id).first()
+    db.session.delete(a)
+    db.session.commit()
+    return redirect('/groups')
 
 
 def send_message(email, subject, message, files):

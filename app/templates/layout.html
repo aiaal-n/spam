@@ -22,10 +22,11 @@
                     <li><a href="/">Главная страница</a></li>
                     <li><a href="/dowload">Загрузить</a></li>
                     <li><a href="/template">Шаблоны</a></li>
+                    <li><a href="/groups">Группы</a></li>
                 </ul>
                 <div class="navbar-header navbar-right">
                     <ul class="nav navbar-nav">
-                        {% if 'email' in session: %}
+                        {% if 'email' in session %}
                         <li><a href="/profile">{{ session['email'] }}</a></li>
                         <li><a href="/logout">Выход</a></li>
                         {% else %}

@@ -24,6 +24,7 @@
                         <th>#</th>
                         <th>Наименование организации</th>
                         <th>Электронная почта</th>
+                        <th>Группы</th>
                         <th></th>
                     </tr>
                     </thead>
@@ -37,6 +38,9 @@
                             </td>
                             <td>
                                 {{ object.mails }}
+                            </td>
+                            <td>
+                                {{ object.group_id }}
                             </td>
                             <td>
                                 <button class="btn btn-primary btn-xs pull-right" onclick="confirmUpdate(event);" id="{{ object.id }}">
@@ -54,6 +58,10 @@
                     <button class="btn btn-primary" style="float: right;">Добавить</button>
                 </a>
                 <p id="out"></p>
+                {% else %}
+                <a href="/create">
+                    <button class="btn btn-primary" style="float: right;">Добавить</button>
+                </a>
             {% endif %}
     </div>
     </div>
