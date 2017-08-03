@@ -10,8 +10,8 @@
                 <h3>Список</h3>
                 {{ pagination.info }}
                 {{ pagination.links }}
-                <input type="text" id="myInput" class="form-control" onkeyup="Search()"
-                       placeholder="Поиск по организациям">
+                        <input type="text" id="myInput" class="form-control" onkeyup="Search()"
+                               placeholder="Поиск по организациям">
                 <div id="pagesize" style="font-size: small" align="right">Показывать по
                     <a href="/?id=10" style="cursor: pointer">10</a>
                     <a href="/?id=20" style="cursor: pointer">20</a>
@@ -24,7 +24,17 @@
                         <th>#</th>
                         <th>Наименование организации</th>
                         <th>Электронная почта</th>
-                        <th>Группы</th>
+                        <th>
+                            <form name="groupForm" method="post" action="">
+                                <select class="form-control" onchange="document.forms['groupForm'].submit()"
+                                        name="groups">
+                                    <option value="" disabled selected hidden>Выберите группу</option>
+                                    {% for gr in groups %}
+                                        <option value="{{ gr.id }}">{{ gr.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </th>
                         <th></th>
                     </tr>
                     </thead>
@@ -40,10 +50,15 @@
                                 {{ object.mails }}
                             </td>
                             <td>
-                                {{ object.group_id }}
+                                {% for gr in groups %}
+                                    {% if object.group_id == gr.id %}
+                                        {{ gr.name }}
+                                    {% endif %}
+                                {% endfor %}
                             </td>
                             <td>
-                                <button class="btn btn-primary btn-xs pull-right" onclick="confirmUpdate(event);" id="{{ object.id }}">
+                                <button class="btn btn-primary btn-xs pull-right" onclick="confirmUpdate(event);"
+                                        id="{{ object.id }}">
                                     <span class="glyphicon glyphicon-pencil" id="{{ object.id }}"></span>
                                 </button>
                             </td>
@@ -58,13 +73,12 @@
                     <button class="btn btn-primary" style="float: right;">Добавить</button>
                 </a>
                 <p id="out"></p>
-                {% else %}
+            {% else %}
+                <h1>Записи не найдены</h1>
                 <a href="/create">
                     <button class="btn btn-primary" style="float: right;">Добавить</button>
                 </a>
             {% endif %}
-    </div>
-    </div>
     <div class="modal fade" tabindex="-1" role="dialog" id="modal-delete">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -85,8 +99,6 @@
             </div>
         </div>
     </div>
-
-
     <div class="modal fade" tabindex="-1" role="dialog" id="modal-send">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -104,8 +116,8 @@
                             <div class="col-xs-6">
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
-                                    Доступные шаблоны заданий
-                                </div>
+                                        Доступные шаблоны заданий
+                                    </div>
                                     <div class="list-group" id="templates_available">
                                         {% for t in template %}
                                             <a href="#" class="list-group-item" data-id="{{ t.id }}"
@@ -120,8 +132,8 @@
                             <div class="col-xs-6">
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
-                                    Выбранные шаблоны заданий
-                                </div>
+                                        Выбранные шаблоны заданий
+                                    </div>
                                     <ul class="list-group" id="templates_selected">
                                     </ul>
                                 </div>
@@ -134,8 +146,7 @@
             </div>
         </div>
     </div>
-
-    <script type="text/javascript">
+    <script>
         $('#selectAll').click(function (e) {
             var table = $(e.target).closest('table');
             $('td input:checkbox', table).prop('checked', this.checked);
@@ -159,22 +170,41 @@
                 width: 'auto'
             });
             dialog.modal('show');
-            document.getElementById("text-org").textContent = selectedName;
-            document.getElementById("text-org").innerHTML = document.getElementById("text-org").textContent.replaceAll(",", "<br>")
-            $('#list_id').val(selectedIds)
-
+            document.getElementById("text-org").textContent = selectedName.concat(localStorage.getItem('name'));
+            document.getElementById("text-org").innerHTML = document.getElementById("text-org").textContent.replaceAll(",", "<br>");
+            $('#list_id').val(selectedIds.concat(localStorage.getItem('id')));
+            localStorage.clear();
         });
-
         function confirmUpdate(event) {
-{#            event.stopPropagation();#}
             var id = $(event.target).attr('id');
             window.location = '/update/?id=' + id;
         }
-
+        $('li').click(function () {
+            var selectedIds = [];
+            var selectedName = [];
+            $('#myTable').find('tr').filter(':has(:checkbox:checked)').each(function () {
+                selectedIds.push($(this).closest('tr').attr('id'));
+                if (selectedIds[0] == undefined) {
+                    selectedIds.splice(0, 1)
+                }
+                if ($(this).closest('tr').children('td')[2] != undefined) {
+                    selectedName.push($(this).closest('tr').children('td')[2].innerText)
+                }
+            });
+            if(selectedName != '') {
+{#                var arr = [];#}
+{#                arr.push(localStorage.getItem('name'));#}
+                localStorage.setItem('id', selectedIds);
+                localStorage.setItem('name', selectedName);
+{#                arr.push(localStorage.getItem('name'));#}
+{#                localStorage.setItem('12', arr);#}
+            }
+        });
+        console.log(localStorage.getItem('name'));
         $('#button_delete').click(function () {
             var selectedIds = [];
             var selectedName = [];
-            $('#myTable tr').filter(':has(:checkbox:checked)').each(function () {
+            $('#myTable').find('tr').filter(':has(:checkbox:checked)').each(function () {
                 selectedIds.push($(this).closest('tr').attr('id'));
                 if (selectedIds[0] == undefined) {
                     selectedIds.splice(0, 1)
@@ -186,12 +216,12 @@
             var link = '/delete';
             var dialog = $('#modal-delete');
             dialog.find('form').attr('action', link);
-
             dialog.modal('show');
-            document.getElementById("text-modal").textContent = selectedName;
-            document.getElementById("text-modal").innerHTML = document.getElementById("text-modal").textContent.replaceAll(",", "<br>")
-            console.log(document.getElementById("text-modal").innerHTML)
-            $('#list_id_del').val(selectedIds)
+            document.getElementById("text-modal").textContent = selectedName.concat(localStorage.getItem('name'));
+            document.getElementById("text-modal").innerHTML = document.getElementById("text-modal").textContent.replaceAll(",", "<br>");
+            $('#list_id_del').val(selectedIds.concat(localStorage.getItem('id')));
+            localStorage.clear();
+            arrCheck.clear();
         });
         String.prototype.replaceAll = function (token, newToken, ignoreCase) {
             var _token;
@@ -216,7 +246,7 @@
             return str;
         };
         $('input[type=checkbox]').change(function () {
-            var len = $('input[type=checkbox]:checked').length
+            var len = $('input[type=checkbox]:checked').length;
             if (len > 0) {
                 $('#button_send').attr("disabled", false).removeClass('disabled');
                 $('#button_delete').attr("disabled", false).removeClass('disabled');
@@ -225,11 +255,6 @@
                 $("#button_send").attr("disabled", true).addClass('disabled');
                 $('#button_delete').attr("disabled", true).addClass('disabled');
             }
-            {#            selectedIds.push();#}
-            {#            console.log(selectedIds)#}
-            {#            $.each(selectedIds, function (index, id) {#}
-            {#                selectedIds.splice(id,1);#}
-            {#            });#}
         });
 
         function removeTemplate() {
@@ -276,7 +301,5 @@
                 }
             }
         }
-
-
     </script>
 {% endblock %}

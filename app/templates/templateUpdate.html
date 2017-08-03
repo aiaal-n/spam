@@ -5,12 +5,12 @@
     <div class="col-md-6 col-md-offset-3">
         <form method="post" enctype=multipart/form-data>
             <div class="form-group">
-                <label>Наименование шаблона(Тема почты)</label>
-                <input class="form-control" required name="name" value="{{data.name}}">
+                <label>Наименование шаблона</label>
+                <input class="form-control" placeholder="Тема почты" required name="name" value="{{data.name}}">
             </div>
             <div class="form-group">
                 <label>Сообщение</label>
-                <textarea rows="5" class="form-control" required name="message">{{data.message}}</textarea>
+                <textarea rows="5" class="form-control" placeholder="Введите текст..." required name="message">{{data.message}}</textarea>
             </div>
             <div class="form-group">
     			<label for="exampleInputFile">Выберите файл</label>

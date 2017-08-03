@@ -13,19 +13,20 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="column1">Наименование организации</label>
-                        <input class="form-control" type="text" id="column1" required pattern="^[ 0-9]+$" name="column1">
+                        <input class="form-control" type="text" id="column1" placeholder="Номер колонки организации" required pattern="^[ 0-9]+$" name="column1">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="column2">Почта</label>
-                        <input class="form-control" type="text" id="column2" required pattern="^[ 0-9]+$" name="column2">
+                        <input class="form-control" type="text" id="column2" placeholder="Номер колонки почты" required pattern="^[ 0-9]+$" name="column2">
                     </div>
                 </div>
             </div>
             <div class="form-group">
                 <label>Группа</label>
-                <select class="form-control">
+                <select class="form-control" name="groups">
+                <option value="" disabled selected hidden>Выберите группу</option>
                     {% for gr in groups %}
                     <option value="{{ gr.id }}">{{ gr.name }}</option>
                     {% endfor %}

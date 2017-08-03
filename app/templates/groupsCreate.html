@@ -3,14 +3,52 @@
 {% block body %}
 <div class="row">
     <div class="col-md-6 col-md-offset-3">
+
+
         <form method="post" enctype=multipart/form-data>
             <div class="form-group">
-                <label>Наименование группы</label>
-                <input class="form-control" required name="name">
-            </div>
+{#                <label>Наименование группы</label>#}
+{#                <input class="form-control" required name="name">#}
+{#            <div class="hero-unit" style="margin-top:40px">#}
+{#                <textarea class="textarea" placeholder="Enter text ..." style="width: 810px; height: 200px;"></textarea>#}
+{#            </div>#}
+                <div id="summernote"></div>
             <button type="submit" class="btn btn-primary">Сохранить</button>
             <a href="/template" class="btn btn-default">Отмена</a>
+            </div>
         </form>
     </div>
 </div>
+<!-- include summernote css/js-->
+<link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.6/summernote.css" rel="stylesheet">
+<script src="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.6/summernote.js"></script>
+{#    <link href="../static/css/bootstrap-wysihtml5.css" type="text/css" rel="stylesheet">#}
+{#    <script src="../static/js/1.js" ></script>#}
+{#    <script src="../static/js/bootstrap-wysihtml5.js" ></script>#}
+
+{#    <link href="../static/css/summerStyle.css" type="text/css" rel="stylesheet">#}
+{#    <script src="../static/js/summernote.js" ></script>#}
+
+
+    <script>
+    $(document).ready(function() {
+        $('#summernote').summernote({
+            placeholder: 'Введите текст...',
+            height: 300,                 // set editor height
+            minHeight: null,             // set minimum height of editor
+            maxHeight: null,
+            fontsize: true, // set maximum height of editor
+            focus: true                 // set focus to editable area after initializing summernote
+        });
+    });
+{#	$('.textarea').wysihtml5({#}
+{#        "font-styles": true, //Font styling, e.g. h1, h2, etc. Default true#}
+{#        "emphasis": true, //Italics, bold, etc. Default true#}
+{#        "lists": true, //(Un)ordered lists, e.g. Bullets, Numbers. Default true#}
+{#        "html": true, //Button which allows you to edit the generated HTML. Default false#}
+{#        "link": false, //Button to insert a link. Default true#}
+{#        "image": false, //Button to insert an image. Default true,#}
+{#        "color": false //Button to change color of font#}
+{#    });#}
+    </script>
 {% endblock %}

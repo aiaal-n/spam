@@ -25,6 +25,25 @@ app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
 @app.route('/', methods=["POST", "GET"])
 def index():
+    if request.method == 'POST':
+        name = request.form.get('groups')
+        groups = Groups.query.all()
+        page_id = request.args.get('id')
+        if page_id is None:
+            ITEMS_PER_PAGE = 10
+        else:
+            ITEMS_PER_PAGE = int(page_id)
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        template_message = TemplateMessage.query.all()
+        data_len = Mails.query.all()
+        data = Mails.query.filter_by(group_id=name).paginate(page, ITEMS_PER_PAGE, error_out=False).items
+        pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
+                                per_page=ITEMS_PER_PAGE,
+                                css_framework='bootstrap3', active_url='users-page-url', record_name='data')
+
+        return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
+                               pagination=pagination, groups=groups)
+    groups = Groups.query.all()
     page_id = request.args.get('id')
     if page_id is None:
         ITEMS_PER_PAGE = 10
@@ -39,7 +58,7 @@ def index():
                             css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
     return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
-                           pagination=pagination)
+                           pagination=pagination, groups=groups)
 
 
 @app.route("/login", methods=['POST', 'GET'])
@@ -126,6 +145,7 @@ def dowload():
     if request.method == "POST":
         columnNameOrg = request.form['column1']
         columnEmail = request.form['column2']
+        groups = request.form['groups']
         file = request.files['inputFile'].read()
         if not file:
             return "No file"
@@ -133,12 +153,12 @@ def dowload():
         for column in sheet.row:
             try:
                 if validate_email(column[int(columnEmail)-1]):
-                    addMail = Mails(name=column[int(columnNameOrg)-1], mails=column[int(columnEmail)-1])
+                    addMail = Mails(name=column[int(columnNameOrg)-1], mails=column[int(columnEmail)-1], group_id=groups)
                     db.session.add(addMail)
                     db.session.commit()
-            except builtins.TypeError:
-                flash('Выбрана не правильная колонна')
-                return redirect(url_for('dowload'))
+            # except builtins.TypeError:
+            #     flash('Выбрана не правильная колонна')
+            #     return redirect(url_for('dowload'))
             except builtins.IndexError:
                 flash('Выбрана не правильная колонна')
                 return redirect(url_for('dowload'))
@@ -329,6 +349,21 @@ def groups_delete():
     return redirect('/groups')
 
 
+# @app.route("/search", methods=["POST", "GET"])
+# def search():
+#     if request.method == 'POST':
+#         text_search = request.form['search']
+#         print(text_search)
+#         search = Mails.query.filter_by(name=text_search).all()
+#         print(search)
+#         if search == []:
+#             flash("Не найдено")
+#             return redirect("/")
+#         else:
+#             return redirect("/")
+
+
+
 def send_message(email, subject, message, files):
     if 'email' in session:
         loginSite = User.query.filter_by(email=session['email']).first()
@@ -369,7 +404,11 @@ def send_message(email, subject, message, files):
             flash("Не правильно введена почта или пароль.")
             return url_for('index')
         print(email)
-        s.sendmail(loginSite.email, email, msg.as_string())
+        try:
+            s.sendmail('Задолженность', email, msg.as_string())
+        except builtins.UnicodeEncodeError:
+            flash("Неправильно введена электронная почта "+email)
+            return url_for('index')
         s.quit()
     else:
         flash('Вход не выполнен')
