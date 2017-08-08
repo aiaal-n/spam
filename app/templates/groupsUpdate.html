@@ -1,15 +1,15 @@
 {% extends "layout.html" %}
-{% block title %}Шаблоны{% endblock %}
+{% block title %}Группы{% endblock %}
 {% block body %}
 <div class="row">
     <div class="col-md-6 col-md-offset-3">
-        <form method="post" enctype=multipart/form-data>
+        <form method="post" id="form_text" enctype=multipart/form-data>
             <div class="form-group">
                 <label>Наименование группы</label>
                 <input class="form-control" placeholder="Наименование" required name="name" value="{{data.name}}">
             </div>
             <button type="submit" class="btn btn-primary">Сохранить</button>
-            <a href="/template" class="btn btn-default">Отмена</a>
+            <a href="/groups" class="btn btn-default">Отмена</a>
         </form>
     </div>
 </div>

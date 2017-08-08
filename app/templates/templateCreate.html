@@ -3,23 +3,41 @@
 {% block body %}
 <div class="row">
     <div class="col-md-6 col-md-offset-3">
-        <form method="post" enctype=multipart/form-data>
+        <form method="post" id="form_temp" enctype=multipart/form-data>
             <div class="form-group">
                 <label>Наименование шаблона</label>
                 <input class="form-control" placeholder="Тема почты" required name="name">
             </div>
             <div class="form-group">
                 <label>Сообщение</label>
-                <textarea rows="5" class="form-control" placeholder="Введите текст..." required name="message"></textarea>
+                <div id="summernote"></div>
+                <input type="hidden" id="text_code" required name="message">
             </div>
             <div class="form-group">
     			<label for="exampleInputFile">Выберите файл</label>
     			<input type="file" id='exampleInputFile' name="inputFile">
     			<p class="help-block">Выберите файл.</p>
   			</div>
-            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="button" onclick="save()" class="btn btn-primary">Сохранить</button>
             <a href="/template" class="btn btn-default">Отмена</a>
         </form>
     </div>
 </div>
+
+    <script>
+    var save = function () {
+            var text_code = $('#summernote').summernote('code');
+            $('#text_code').val(text_code);
+            $('#form_temp').submit();
+        };
+        $('#summernote').summernote({
+            placeholder: 'Введите текст...',
+            height: 300,                 // set editor height
+            minHeight: null,             // set minimum height of editor
+            maxHeight: null,
+            lang: 'ru-RU',
+            fontsize: true, // set maximum height of editor
+            focus: true
+        });
+    </script>
 {% endblock %}

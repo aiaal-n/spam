@@ -1898,7 +1898,7 @@
   var toolbar = renderer.create('<div class="note-toolbar panel-heading"/>');
   var editingArea = renderer.create('<div class="note-editing-area"/>');
   var codable = renderer.create('<textarea class="note-codable"/>');
-  var editable = renderer.create('<div class="note-editable panel-body" contentEditable="true"/>');
+  var editable = renderer.create('<div class="note-editable panel-body" id="message_name" contentEditable="true"/>');
   var statusbar = renderer.create([
     '<div class="note-statusbar">',
     '  <div class="note-resizebar">',
@@ -5818,7 +5818,7 @@
       }
 
       if (agent.isMac) {
-        shortcut = shortcut.replace('CMD', '?').replace('SHIFT', '?');
+        shortcut = shortcut.replace('CMD', '⌘').replace('SHIFT', '⇧');
       }
 
       shortcut = shortcut.replace('BACKSLASH', '\\')
@@ -7295,8 +7295,8 @@
 
       var body = [
         '<p class="text-center">',
-        '<a href="http://summernote.org/" target="_blank">Summernote 0.8.6</a> � ',
-        '<a href="https://github.com/summernote/summernote" target="_blank">Project</a> � ',
+        '<a href="http://summernote.org/" target="_blank">Summernote 0.8.6</a> · ',
+        '<a href="https://github.com/summernote/summernote" target="_blank">Project</a> · ',
         '<a href="https://github.com/summernote/summernote/issues" target="_blank">Issues</a>',
         '</p>'
       ].join('');

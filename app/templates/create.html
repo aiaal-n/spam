@@ -15,7 +15,8 @@
             </div>
             <div class="form-group">
                 <label>Группа</label>
-                <select class="form-control" name="groups">
+                <select class="form-control" name="groups" required>
+                <option value="" disabled selected hidden>Выберите группу</option>
                     {% for gr in groups %}
                     <option value="{{gr.id}}">{{ gr.name}}</option>
                     {% endfor %}
@@ -36,7 +37,8 @@
             </div>
             <div class="form-group">
                 <label>Группа</label>
-                <select class="form-control" name="groups">
+                <select class="form-control" name="groups" required>
+                <option value="" disabled selected hidden>Выберите группу</option>
                     {% for gr in groups %}
                     <option value="{{gr.id}}">{{ gr.name}}</option>
                     {% endfor %}

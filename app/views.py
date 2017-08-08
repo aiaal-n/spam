@@ -1,13 +1,12 @@
 import builtins
 import socket
 
-from flask import flash, session
 import smtplib
 from flask_paginate import Pagination, get_page_parameter
 import os
 import pyexcel
 
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, flash, session
 
 from app import app
 from app.models import Mails, db, TemplateMessage, User, Groups
@@ -22,11 +21,51 @@ from validate_email import validate_email
 
 app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
+group = -1
 
 @app.route('/', methods=["POST", "GET"])
 def index():
+    global group
     if request.method == 'POST':
         name = request.form.get('groups')
+        groups = Groups.query.all()
+        page_id = request.args.get('id')
+        if page_id is None:
+            ITEMS_PER_PAGE = 10
+        else:
+            ITEMS_PER_PAGE = int(page_id)
+        group = name
+        if int(name) == -1:
+            group = name
+            template_message = TemplateMessage.query.all()
+            data_len = Mails.query.all()
+            data = Mails.query.paginate(1, ITEMS_PER_PAGE, error_out=False).items
+            pagination = Pagination(page=1, total=len(data_len), format_total=len(data), format_number=True,
+                                    per_page=ITEMS_PER_PAGE,
+                                    css_framework='bootstrap3', active_url='users-page-url', record_name='data')
+
+            return render_template("index.html", page=1, template=template_message, per_page=ITEMS_PER_PAGE,
+                                   data=data,
+                                   pagination=pagination, groups=groups)
+        template_message = TemplateMessage.query.all()
+        data_len = Mails.query.filter_by(group_id=name).all()
+        data = Mails.query.filter_by(group_id=name).paginate(1, ITEMS_PER_PAGE, error_out=False).items
+        if data:
+            pagination = Pagination(page=1, total=len(data_len), format_total=len(data), format_number=True,
+                                    per_page=ITEMS_PER_PAGE,
+                                    css_framework='bootstrap3', active_url='users-page-url', record_name='data')
+
+            return render_template("index.html", page=1, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
+                                   pagination=pagination, groups=groups)
+        else:
+            group = -1
+            pagination = Pagination(page=1, total=len(data_len), format_total=len(data), format_number=True,
+                                    per_page=ITEMS_PER_PAGE,
+                                    css_framework='bootstrap3', active_url='users-page-url', record_name='data')
+
+            return render_template("index.html", page=1, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
+                                   pagination=pagination, groups=groups)
+    if int(group) == -1:
         groups = Groups.query.all()
         page_id = request.args.get('id')
         if page_id is None:
@@ -36,29 +75,31 @@ def index():
         page = request.args.get(get_page_parameter(), type=int, default=1)
         template_message = TemplateMessage.query.all()
         data_len = Mails.query.all()
-        data = Mails.query.filter_by(group_id=name).paginate(page, ITEMS_PER_PAGE, error_out=False).items
+        data = Mails.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
+        pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
+                                per_page=ITEMS_PER_PAGE,
+                                css_framework='bootstrap3', active_url='users-page-url', record_name='data')
+
+        return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE,
+                               data=data,
+                               pagination=pagination, groups=groups)
+    else:
+        groups = Groups.query.all()
+        page_id = request.args.get('id')
+        if page_id is None:
+            ITEMS_PER_PAGE = 10
+        else:
+            ITEMS_PER_PAGE = int(page_id)
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        template_message = TemplateMessage.query.all()
+        data_len = Mails.query.filter_by(group_id=group).all()
+        data = Mails.query.filter_by(group_id=group).paginate(page, ITEMS_PER_PAGE, error_out=False).items
         pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
                                 per_page=ITEMS_PER_PAGE,
                                 css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
         return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
                                pagination=pagination, groups=groups)
-    groups = Groups.query.all()
-    page_id = request.args.get('id')
-    if page_id is None:
-        ITEMS_PER_PAGE = 10
-    else:
-        ITEMS_PER_PAGE = int(page_id)
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    template_message = TemplateMessage.query.all()
-    data_len = Mails.query.all()
-    data = Mails.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
-    pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
-                            per_page=ITEMS_PER_PAGE,
-                            css_framework='bootstrap3', active_url='users-page-url', record_name='data')
-
-    return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
-                           pagination=pagination, groups=groups)
 
 
 @app.route("/login", methods=['POST', 'GET'])
@@ -174,7 +215,11 @@ def send():
         message = TemplateMessage.query.filter_by(id=message_id).first()
         for i in list_id:
             data = Mails.query.filter_by(id=i).first()
-            send_message(data.mails, message.name, message.message, message.file)
+            try:
+                send_message(data.mails, message.name, message.message, message.file)
+            except builtins.AttributeError:
+                flash("Шаблон сообщения не выбран")
+                return redirect("/")
     return redirect(url_for('index'))
 
 
@@ -183,10 +228,11 @@ def delete():
     if request.method == "POST":
         list_id = request.form.get('list_id_del', "").split(",")
         for id_org in list_id:
-            ses1 = Mails.query.filter_by(id=id_org).all()
-            for s in ses1:
-                db.session.delete(s)
-                db.session.commit()
+            if id_org != "":
+                ses1 = Mails.query.filter_by(id=id_org).all()
+                for s in ses1:
+                    db.session.delete(s)
+                    db.session.commit()
     return redirect(url_for('index'))
 
 
@@ -349,21 +395,6 @@ def groups_delete():
     return redirect('/groups')
 
 
-# @app.route("/search", methods=["POST", "GET"])
-# def search():
-#     if request.method == 'POST':
-#         text_search = request.form['search']
-#         print(text_search)
-#         search = Mails.query.filter_by(name=text_search).all()
-#         print(search)
-#         if search == []:
-#             flash("Не найдено")
-#             return redirect("/")
-#         else:
-#             return redirect("/")
-
-
-
 def send_message(email, subject, message, files):
     if 'email' in session:
         loginSite = User.query.filter_by(email=session['email']).first()
@@ -374,8 +405,13 @@ def send_message(email, subject, message, files):
         msg['Subject'] = Header(subject, 'utf-8')
         msg['From'] = loginSite.email
         msg['To'] = email
+        msg.preamble = """
+        Your mail reader does not support the report format.
+        Please visit us <a href="http://www.mysite.com">online</a>!"""
 
-        msg.attach(MIMEText(message.encode('utf-8'), 'plain', 'utf-8'))
+        HTML_TEXT = MIMEText(message, 'html')
+        msg.attach(HTML_TEXT)
+
         if files != '':
             path = os.path.join(app.config['UPLOAD_FOLDER'], files)
             with open(path, 'rb') as fp:
@@ -405,7 +441,7 @@ def send_message(email, subject, message, files):
             return url_for('index')
         print(email)
         try:
-            s.sendmail('Задолженность', email, msg.as_string())
+            s.sendmail(loginSite.email, email, msg.as_string())
         except builtins.UnicodeEncodeError:
             flash("Неправильно введена электронная почта "+email)
             return url_for('index')

@@ -25,7 +25,7 @@
             </div>
             <div class="form-group">
                 <label>Группа</label>
-                <select class="form-control" name="groups">
+                <select class="form-control" name="groups" required>
                 <option value="" disabled selected hidden>Выберите группу</option>
                     {% for gr in groups %}
                     <option value="{{ gr.id }}">{{ gr.name }}</option>
@@ -34,7 +34,7 @@
             </div>
             <div class="form-group">
                 <label for="exampleInputFile">Выберите файл</label>
-                <input type="file" id='exampleInputFile' name="inputFile">
+                <input type="file" id='exampleInputFile' name="inputFile" required>
                 <p class="help-block">Выберите excel файл.</p>
             </div>
             <button type="submit" class="btn btn-success">Сохранить</button>

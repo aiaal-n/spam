@@ -10,8 +10,8 @@
                 <h3>Список</h3>
                 {{ pagination.info }}
                 {{ pagination.links }}
-                        <input type="text" id="myInput" class="form-control" onkeyup="Search()"
-                               placeholder="Поиск по организациям">
+                <input type="text" id="myInput" class="form-control" onkeyup="Search()"
+                       placeholder="Поиск по организациям">
                 <div id="pagesize" style="font-size: small" align="right">Показывать по
                     <a href="/?id=10" style="cursor: pointer">10</a>
                     <a href="/?id=20" style="cursor: pointer">20</a>
@@ -26,9 +26,9 @@
                         <th>Электронная почта</th>
                         <th>
                             <form name="groupForm" method="post" action="">
-                                <select class="form-control" onchange="document.forms['groupForm'].submit()"
-                                        name="groups">
+                                <select class="form-control" onchange="document.forms['groupForm'].submit()" name="groups">
                                     <option value="" disabled selected hidden>Выберите группу</option>
+                                    <option value="-1">Все группы</option>
                                     {% for gr in groups %}
                                         <option value="{{ gr.id }}">{{ gr.name }}</option>
                                     {% endfor %}
@@ -116,7 +116,7 @@
                             <div class="col-xs-6">
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
-                                        Доступные шаблоны заданий
+                                        Шаблон сообщения
                                     </div>
                                     <div class="list-group" id="templates_available">
                                         {% for t in template %}
@@ -132,10 +132,9 @@
                             <div class="col-xs-6">
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
-                                        Выбранные шаблоны заданий
+                                        Выбранный шаблон сообщения
                                     </div>
-                                    <ul class="list-group" id="templates_selected">
-                                    </ul>
+                                    <ul class="list-group" id="templates_selected"></ul>
                                 </div>
                             </div>
                         </div>
@@ -170,14 +169,43 @@
                 width: 'auto'
             });
             dialog.modal('show');
-            document.getElementById("text-org").textContent = selectedName.concat(localStorage.getItem('name'));
+            if (localStorage.getItem('name') == null){
+                var textArray = selectedName;
+            }
+            else {
+                var textArray = unique(selectedName.concat(localStorage.getItem('name').split(",")));
+                textArray.splice(0,1);
+            }
+            document.getElementById("text-org").textContent = textArray;
             document.getElementById("text-org").innerHTML = document.getElementById("text-org").textContent.replaceAll(",", "<br>");
-            $('#list_id').val(selectedIds.concat(localStorage.getItem('id')));
+            if (localStorage.getItem('id') == null){
+                var arr = selectedIds;
+            }
+            else {
+                var arr = unique(selectedIds.concat(localStorage.getItem('id').split(",")));
+                arr.splice(0,1)
+            }
+            $('#list_id').val(arr);
             localStorage.clear();
         });
         function confirmUpdate(event) {
             var id = $(event.target).attr('id');
             window.location = '/update/?id=' + id;
+        }
+        function appendToStorage(name, data) {
+            var old = localStorage.getItem(name);
+            if (old === null) old = "";
+            localStorage.setItem(name, old + data);
+        }
+        if (localStorage.getItem('id') != null) {
+            var arr = localStorage.getItem('id').split(",");
+            for (var i = 0; i < arr.length - 1; i++) {
+                for (var j = 1; j < $('#myTable').find('tr').length - 1; j++) {
+                    if (arr[i] == $('#myTable').find('tr')[j].id) {
+                        $('#myTable').find('tr').eq(j).children('td').children('input').attr('checked', true);
+                    }
+                }
+            }
         }
         $('li').click(function () {
             var selectedIds = [];
@@ -191,16 +219,23 @@
                     selectedName.push($(this).closest('tr').children('td')[2].innerText)
                 }
             });
-            if(selectedName != '') {
-{#                var arr = [];#}
-{#                arr.push(localStorage.getItem('name'));#}
-                localStorage.setItem('id', selectedIds);
-                localStorage.setItem('name', selectedName);
-{#                arr.push(localStorage.getItem('name'));#}
-{#                localStorage.setItem('12', arr);#}
+            if (selectedName != '') {
+                appendToStorage('id', selectedIds + ',');
+                appendToStorage('name', selectedName + ',');
+                {#                arr(localStorage.getItem('name'));#}
+                {#                localStorage.ap;#}
             }
         });
-        console.log(localStorage.getItem('name'));
+        function unique(a) {
+            i = a.length;
+            a.sort();
+            while (i--) {
+                if (a[i] == a[i - 1]) {
+                    a.splice(i, 1);
+                }
+            }
+            return a;
+        }
         $('#button_delete').click(function () {
             var selectedIds = [];
             var selectedName = [];
@@ -217,11 +252,24 @@
             var dialog = $('#modal-delete');
             dialog.find('form').attr('action', link);
             dialog.modal('show');
-            document.getElementById("text-modal").textContent = selectedName.concat(localStorage.getItem('name'));
+            if (localStorage.getItem('name') == null){
+                var textArray = selectedName;
+            }
+            else {
+                var textArray = unique(selectedName.concat(localStorage.getItem('name').split(",")));
+                textArray.splice(0,1);
+            }
+            document.getElementById("text-modal").textContent = textArray;
             document.getElementById("text-modal").innerHTML = document.getElementById("text-modal").textContent.replaceAll(",", "<br>");
-            $('#list_id_del').val(selectedIds.concat(localStorage.getItem('id')));
+            if (localStorage.getItem('id') == null){
+                var arr = selectedIds;
+            }
+            else {
+                var arr = unique(selectedIds.concat(localStorage.getItem('id').split(",")));
+                arr.splice(0,1)
+            }
+            $('#list_id_del').val(arr);
             localStorage.clear();
-            arrCheck.clear();
         });
         String.prototype.replaceAll = function (token, newToken, ignoreCase) {
             var _token;
