@@ -26,7 +26,8 @@
                         <th>Электронная почта</th>
                         <th>
                             <form name="groupForm" method="post" action="">
-                                <select class="form-control" onchange="document.forms['groupForm'].submit()" name="groups">
+                                <select class="form-control" onchange="document.forms['groupForm'].submit()"
+                                        name="groups">
                                     <option value="" disabled selected hidden>Выберите группу</option>
                                     <option value="-1">Все группы</option>
                                     {% for gr in groups %}
@@ -75,6 +76,15 @@
                 <p id="out"></p>
             {% else %}
                 <h1>Записи не найдены</h1>
+                <form name="groupForm" method="post" action="">
+                    <select class="form-control" onchange="document.forms['groupForm'].submit()" name="groups">
+                        <option value="" disabled selected hidden>Выберите группу</option>
+                        <option value="-1">Все группы</option>
+                        {% for gr in groups %}
+                            <option value="{{ gr.id }}">{{ gr.name }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
                 <a href="/create">
                     <button class="btn btn-primary" style="float: right;">Добавить</button>
                 </a>
@@ -169,21 +179,21 @@
                 width: 'auto'
             });
             dialog.modal('show');
-            if (localStorage.getItem('name') == null){
+            if (localStorage.getItem('name') == null) {
                 var textArray = selectedName;
             }
             else {
                 var textArray = unique(selectedName.concat(localStorage.getItem('name').split(",")));
-                textArray.splice(0,1);
+                textArray.splice(0, 1);
             }
             document.getElementById("text-org").textContent = textArray;
             document.getElementById("text-org").innerHTML = document.getElementById("text-org").textContent.replaceAll(",", "<br>");
-            if (localStorage.getItem('id') == null){
+            if (localStorage.getItem('id') == null) {
                 var arr = selectedIds;
             }
             else {
                 var arr = unique(selectedIds.concat(localStorage.getItem('id').split(",")));
-                arr.splice(0,1)
+                arr.splice(0, 1)
             }
             $('#list_id').val(arr);
             localStorage.clear();
@@ -252,21 +262,21 @@
             var dialog = $('#modal-delete');
             dialog.find('form').attr('action', link);
             dialog.modal('show');
-            if (localStorage.getItem('name') == null){
+            if (localStorage.getItem('name') == null) {
                 var textArray = selectedName;
             }
             else {
                 var textArray = unique(selectedName.concat(localStorage.getItem('name').split(",")));
-                textArray.splice(0,1);
+                textArray.splice(0, 1);
             }
             document.getElementById("text-modal").textContent = textArray;
             document.getElementById("text-modal").innerHTML = document.getElementById("text-modal").textContent.replaceAll(",", "<br>");
-            if (localStorage.getItem('id') == null){
+            if (localStorage.getItem('id') == null) {
                 var arr = selectedIds;
             }
             else {
                 var arr = unique(selectedIds.concat(localStorage.getItem('id').split(",")));
-                arr.splice(0,1)
+                arr.splice(0, 1)
             }
             $('#list_id_del').val(arr);
             localStorage.clear();
