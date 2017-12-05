@@ -1,12 +1,13 @@
 import builtins
 import socket
+import names
 
 import smtplib
 from flask_paginate import Pagination, get_page_parameter
 import os
 import pyexcel
 
-from flask import render_template, request, redirect, url_for, flash, session
+from flask import render_template, request, redirect, url_for, flash, session, jsonify, json, Response
 
 from app import app
 from app.models import Mails, db, TemplateMessage, User, Groups
@@ -22,6 +23,7 @@ from validate_email import validate_email
 app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
 group = -1
+
 
 @app.route('/', methods=["POST", "GET"])
 def index():
@@ -163,7 +165,8 @@ def profile():
         password = request.form['password']
         cpassword = request.form['cpassword']
         if password == cpassword:
-            message = update(User).where(User.email == session['email']).values(email=email, host=host, port=port, cpassword=cpassword)
+            message = update(User).where(User.email == session['email']).values(email=email, host=host, port=port,
+                                                                                cpassword=cpassword)
             db.session.execute(message)
             db.session.commit()
             return redirect(url_for('profile'))
@@ -193,8 +196,9 @@ def dowload():
         sheet = pyexcel.get_sheet(file_type="xlsx", file_content=file)
         for column in sheet.row:
             try:
-                if validate_email(column[int(columnEmail)-1]):
-                    addMail = Mails(name=column[int(columnNameOrg)-1], mails=column[int(columnEmail)-1], group_id=groups)
+                if validate_email(column[int(columnEmail) - 1]):
+                    addMail = Mails(name=column[int(columnNameOrg) - 1], mails=column[int(columnEmail) - 1],
+                                    group_id=groups)
                     db.session.add(addMail)
                     db.session.commit()
             # except builtins.TypeError:
@@ -443,9 +447,54 @@ def send_message(email, subject, message, files):
         try:
             s.sendmail(loginSite.email, email, msg.as_string())
         except builtins.UnicodeEncodeError:
-            flash("Неправильно введена электронная почта "+email)
+            flash("Неправильно введена электронная почта " + email)
             return url_for('index')
         s.quit()
     else:
         flash('Вход не выполнен')
         return url_for('index')
+
+def obj_dict(obj):
+    return obj.__dict__
+
+@app.route("/api/init", methods=["POST", "GET"])
+def api_init():
+
+    if request.method == 'POST':
+        data = request.get_json()
+        # dataDict = json.loads(data)
+        id = data['id']
+        loginSite = User.query.filter_by(id=id).first()
+        if loginSite:
+            return jsonify({'auth':True})
+        else:
+            return jsonify({'auth':False})
+        # return jsonify({'mails':data['msg']})
+    # json.dumps([u.as_dict() for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()])
+    # results = [ob.as_json() for ob in resultset]
+    # list=[]
+    # list = [u.__dict__ for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()]
+    return jsonify({'mails':"s"})
+    # return json.dumps(Mails.query.filter_by(mails="mosolov06@mail.ru").all(), default=obj_dict)
+# Response(json.dumps([u.as_dict() for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()]))
+# jsonify({'mails':"s"})
+
+
+
+@app.route("/api/login", methods=["POST", "GET"])
+def api_login():
+    if request.method == 'POST':
+        data = request.get_json()
+        email = data['email']
+        password = data['pass']
+        loginSite = User.query.filter_by(email=email).first()
+        if loginSite:
+            if loginSite is None:
+                return jsonify({'msg':"error"})
+            else:
+                if loginSite.check_password(password):
+                    return jsonify({'msg':"success", 'id':loginSite.id})
+                else:
+                    return jsonify({'msg':"error"})
+        else:
+            return jsonify({'msg':"error"})
