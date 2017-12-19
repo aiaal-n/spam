@@ -1,6 +1,6 @@
 import builtins
 import socket
-import names
+#import names
 
 import smtplib
 from flask_paginate import Pagination, get_page_parameter
@@ -498,3 +498,20 @@ def api_login():
                     return jsonify({'msg':"error"})
         else:
             return jsonify({'msg':"error"})
+
+@app.route("/api/register", methods=["POST", "GET"])
+def api_register():
+    if request.method == 'POST':
+        data = request.get_json()
+        email = data['email']
+        host = data['host']
+        port = data['port']
+        password = data['pass']
+        loginSite = User.query.filter_by(email=email).first()
+        if loginSite:
+            return jsonify({'msg':"error"})
+        else:
+            user = User(email=email, host=host, port=port, password=password, cpassword=password)
+            db.session.add(user)
+            db.session.commit()
+            return jsonify({'msg':"success"})
