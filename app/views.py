@@ -454,19 +454,22 @@ def send_message(email, subject, message, files):
         flash('Вход не выполнен')
         return url_for('index')
 
+
 def obj_dict(obj):
     return obj.__dict__
 
+
 @app.route("/api/init", methods=["POST", "GET"])
 def api_init():
-
     if request.method == 'POST':
         data = request.get_json()
         # dataDict = json.loads(data)
         id = data['id']
         loginSite = User.query.filter_by(id=id).first()
         if loginSite:
-            return jsonify({'auth':True})
+            groups = Groups.query.all()
+            templates = TemplateMessage.query.all()
+            return jsonify({'auth':True, 'groups':[dict(id=g.id, name=g.name) for g in groups], 'templates':[dict(id=t.id, name=t.name, message=t.message) for t in templates]})
         else:
             return jsonify({'auth':False})
         # return jsonify({'mails':data['msg']})
@@ -474,11 +477,13 @@ def api_init():
     # results = [ob.as_json() for ob in resultset]
     # list=[]
     # list = [u.__dict__ for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()]
-    return jsonify({'mails':"s"})
+    groups = Groups.query.all()
+    templates = TemplateMessage.query.all()
+    return jsonify({'auth': True, 'groups': [dict(id=g.id, name=g.name) for g in groups],
+                    'templates': [dict(id=t.id, name=t.name, message=t.message) for t in templates]})
     # return json.dumps(Mails.query.filter_by(mails="mosolov06@mail.ru").all(), default=obj_dict)
 # Response(json.dumps([u.as_dict() for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()]))
 # jsonify({'mails':"s"})
-
 
 
 @app.route("/api/login", methods=["POST", "GET"])
@@ -498,3 +503,17 @@ def api_login():
                     return jsonify({'msg':"error"})
         else:
             return jsonify({'msg':"error"})
+
+
+@app.route("/api/list", methods=["POST", "GET"])
+def api_list():
+    # arr = []
+    # list = Mails.query.filter_by(group_id="3").all()
+    # for l in list:
+    #     arr.append(l.mails)
+    a = jsonify({"items":[dict(id=u.id, mails=u.mails, name=u.name, group_id=u.group_id) for u in Mails.query.filter_by(group_id="3").all()]})
+    return a
+    # json.dumps([u.as_dict() for u in Mails.query.filter_by(mails="DalurMO@yandex.ru").all()])
+    # results = [ob.as_json() for ob in resultset]
+    # list=[]
+    # list = [u.__dict__ for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()]
