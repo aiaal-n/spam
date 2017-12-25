@@ -518,6 +518,7 @@ def api_list():
     # list=[]
     # list = [u.__dict__ for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()]
 
+
 @app.route("/api/register", methods=["POST", "GET"])
 def api_register():
     if request.method == 'POST':
@@ -534,3 +535,132 @@ def api_register():
             db.session.add(user)
             db.session.commit()
             return jsonify({'msg':"success"})
+
+
+@app.route("/api/add-email", methods=["POST", "GET"])
+def api_add_email():
+    if request.method == "POST":
+        data = request.get_json()
+        email = data['email']
+        name = data['name']
+        groups = data['group_id']
+        message = Mails(name=name, mails=email, group_id=groups)
+        db.session.add(message)
+        db.session.commit()
+        return jsonify({'msg': "success"})
+
+
+@app.route("/api/edit-email", methods=["POST", "GET"])
+def api_edit_email():
+    if request.method == "POST":
+        data = request.get_json()
+        id = data['id']
+        email = data['email']
+        name = data['name']
+        groups = data['groups']
+        message = update(Mails).where(Mails.id == id).values(name=name, mails=email, group_id=groups)
+        db.session.execute(message)
+        db.session.commit()
+        return jsonify({'msg': "success"})
+
+
+@app.route("/api/del-email", methods=["POST", "GET"])
+def api_del_email():
+    if request.method == "POST":
+        data = request.get_json()
+        list_id = data['ids']
+        for id_org in list_id:
+            if id_org != "":
+                ses1 = Mails.query.filter_by(id=id_org).all()
+                for s in ses1:
+                    db.session.delete(s)
+                    db.session.commit()
+                    return jsonify({'msg': "success"})
+        return jsonify({'msg': "false"})
+
+
+@app.route("/api/add-group", methods=["POST"])
+def api_add_group():
+    if request.method == "POST":
+        data = request.get_json()
+        name = data['name']
+        message = Groups(name=name)
+        db.session.add(message)
+        db.session.commit()
+        return jsonify({'msg': "success"})
+
+
+@app.route("/api/edit-group", methods=["POST"])
+def api_edit_group():
+    if request.method == "POST":
+        data = request.get_json()
+        id = data['id']
+        name = data['name']
+        message = update(Groups).where(Groups.id == id).values(name=name)
+        db.session.execute(message)
+        db.session.commit()
+        return jsonify({'msg': "success"})
+
+
+@app.route("/api/del-group", methods=["POST"])
+def api_del_group():
+    if request.method == "POST":
+        data = request.get_json()
+        id = data['id']
+        a = Groups.query.filter_by(id=id).first()
+        db.session.delete(a)
+        db.session.commit()
+        return jsonify({'msg': "success"})
+
+
+@app.route("/api/add-template", methods=["POST"])
+def api_add_template():
+    if request.method == "POST":
+        data = request.get_json()
+        name = data['name']
+        mess = data['message']
+        file = request.files['inputFile']
+        if file.filename == '':
+            filename = ''
+        else:
+            filename = file.filename
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        message = TemplateMessage(name=name, message=mess, file=filename)
+        db.session.add(message)
+        db.session.commit()
+        return jsonify({'msg': "success"})
+
+
+@app.route("/api/edit-template", methods=["POST"])
+def api_edit_template():
+    if request.method == "POST":
+        data = request.get_json()
+        id = data['id']
+        name = data['name']
+        mess = data['message']
+        file = request.files['inputFile']
+        if file.filename == '':
+            if data.file != '':
+                filename = data.file
+            else:
+                filename = ''
+        else:
+            filename = file.filename
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        message = update(TemplateMessage).where(TemplateMessage.id == id).values(name=name, message=mess, file=filename)
+        db.session.execute(message)
+        db.session.commit()
+        return jsonify({'msg': "success"})
+
+
+@app.route("/api/del-template", methods=["POST"])
+def api_del_template():
+    if request.method == "POST":
+        data = request.get_json()
+        id = data['id']
+        a = TemplateMessage.query.filter_by(id=id).first()
+        if a.file != '':
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], a.file))
+        db.session.delete(a)
+        db.session.commit()
+        return jsonify({'msg': "success"})
