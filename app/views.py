@@ -467,20 +467,15 @@ def api_init():
         id = data['id']
         loginSite = User.query.filter_by(id=id).first()
         if loginSite:
-            groups = Groups.query.all()
-            templates = TemplateMessage.query.all()
-            return jsonify({'auth':True, 'groups':[dict(id=g.id, name=g.name) for g in groups], 'templates':[dict(id=t.id, name=t.name, message=t.message) for t in templates]})
+            return jsonify({'auth': True})
         else:
-            return jsonify({'auth':False})
+            return jsonify({'auth': False})
         # return jsonify({'mails':data['msg']})
     # json.dumps([u.as_dict() for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()])
     # results = [ob.as_json() for ob in resultset]
     # list=[]
     # list = [u.__dict__ for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()]
-    groups = Groups.query.all()
-    templates = TemplateMessage.query.all()
-    return jsonify({'auth': True, 'groups': [dict(id=g.id, name=g.name) for g in groups],
-                    'templates': [dict(id=t.id, name=t.name, message=t.message) for t in templates]})
+    return jsonify({'auth': True})
     # return json.dumps(Mails.query.filter_by(mails="mosolov06@mail.ru").all(), default=obj_dict)
 # Response(json.dumps([u.as_dict() for u in Mails.query.filter_by(mails="mosolov06@mail.ru").all()]))
 # jsonify({'mails':"s"})
@@ -579,7 +574,20 @@ def api_del_email():
         return jsonify({'msg': "false"})
 
 
-@app.route("/api/add-group", methods=["POST"])
+@app.route("/api/groups", methods=["POST", "GET"])
+def api_groups():
+    if request.method == "POST":
+        data = request.get_json()
+        id = data['id']
+        if id == 0:
+            groups = Groups.query.all()
+            return jsonify({'groups': [dict(id=g.id, name=g.name) for g in groups]})
+        else:
+            groups = Groups.query.filter_by(id=id).one()
+            return jsonify({'name': groups.name, 'id': groups.id})
+
+
+@app.route("/api/add-group", methods=["POST", "GET"])
 def api_add_group():
     if request.method == "POST":
         data = request.get_json()
@@ -590,7 +598,7 @@ def api_add_group():
         return jsonify({'msg': "success"})
 
 
-@app.route("/api/edit-group", methods=["POST"])
+@app.route("/api/edit-group", methods=["POST", "GET"])
 def api_edit_group():
     if request.method == "POST":
         data = request.get_json()
@@ -602,7 +610,7 @@ def api_edit_group():
         return jsonify({'msg': "success"})
 
 
-@app.route("/api/del-group", methods=["POST"])
+@app.route("/api/del-group", methods=["POST", "GET"])
 def api_del_group():
     if request.method == "POST":
         data = request.get_json()
@@ -613,7 +621,20 @@ def api_del_group():
         return jsonify({'msg': "success"})
 
 
-@app.route("/api/add-template", methods=["POST"])
+@app.route("/api/templates", methods=["POST", "GET"])
+def api_templates():
+    if request.method == "POST":
+        data = request.get_json()
+        id = data['id']
+        if id == 0:
+            templates = TemplateMessage.query.all()
+            return jsonify({'templates': [dict(id=t.id, name=t.name, message=t.message) for t in templates]})
+        else:
+            templates = TemplateMessage.query.filter_by(id=id).one()
+            return jsonify({'name': templates.name, 'id': templates.id, 'message': template.message})
+
+
+@app.route("/api/add-template", methods=["POST", "GET"])
 def api_add_template():
     if request.method == "POST":
         data = request.get_json()
@@ -631,7 +652,7 @@ def api_add_template():
         return jsonify({'msg': "success"})
 
 
-@app.route("/api/edit-template", methods=["POST"])
+@app.route("/api/edit-template", methods=["POST", "GET"])
 def api_edit_template():
     if request.method == "POST":
         data = request.get_json()
@@ -653,7 +674,7 @@ def api_edit_template():
         return jsonify({'msg': "success"})
 
 
-@app.route("/api/del-template", methods=["POST"])
+@app.route("/api/del-template", methods=["POST", "GET"])
 def api_del_template():
     if request.method == "POST":
         data = request.get_json()
