@@ -565,7 +565,7 @@ def api_edit_email():
         id = data['id']
         email = data['email']
         name = data['name']
-        groups = data['groups']
+        groups = data['group_id']
         message = update(Mails).where(Mails.id == id).values(name=name, mails=email, group_id=groups)
         db.session.execute(message)
         db.session.commit()
