@@ -22,85 +22,88 @@ from validate_email import validate_email
 
 app.secret_key = '_\x1ea\xc2>DK\x13\xd0O\xbe1\x13\x1b\x93h2*\x9a+!?\xcb\x8f'
 
-group = -1
-
 
 @app.route('/', methods=["POST", "GET"])
 def index():
-    global group
-    if request.method == 'POST':
-        name = request.form.get('groups')
-        groups = Groups.query.all()
-        page_id = request.args.get('id')
-        if page_id is None:
-            ITEMS_PER_PAGE = 10
-        else:
-            ITEMS_PER_PAGE = int(page_id)
-        group = name
-        if int(name) == -1:
-            group = name
-            template_message = TemplateMessage.query.all()
-            data_len = Mails.query.all()
-            data = Mails.query.paginate(1, ITEMS_PER_PAGE, error_out=False).items
-            pagination = Pagination(page=1, total=len(data_len), format_total=len(data), format_number=True,
+	if 'group' not in session:
+		group = -1
+	else:
+		group = session['group']
+
+	if request.method == 'POST':
+		name = request.form.get('groups')
+		groups = Groups.query.all()
+		page_id = request.args.get('id')
+		if page_id is None:
+			ITEMS_PER_PAGE = 50
+		else:
+			ITEMS_PER_PAGE = int(page_id)
+		session['group'] = name
+		if int(name) == -1:
+			template_message = TemplateMessage.query.all()
+			data_len = Mails.query.all()
+			data = Mails.query.paginate(1, ITEMS_PER_PAGE, error_out=False).items
+			pagination = Pagination(page=1, total=len(data_len), format_total=len(data), format_number=True,
                                     per_page=ITEMS_PER_PAGE,
                                     css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
-            return render_template("index.html", page=1, template=template_message, per_page=ITEMS_PER_PAGE,
+			return render_template("index.html", page=1, template=template_message, per_page=ITEMS_PER_PAGE,
                                    data=data,
                                    pagination=pagination, groups=groups)
-        template_message = TemplateMessage.query.all()
-        data_len = Mails.query.filter_by(group_id=name).all()
-        data = Mails.query.filter_by(group_id=name).paginate(1, ITEMS_PER_PAGE, error_out=False).items
-        if data:
-            pagination = Pagination(page=1, total=len(data_len), format_total=len(data), format_number=True,
+		template_message = TemplateMessage.query.all()
+		data_len = Mails.query.filter_by(group_id=name).all()
+		data = Mails.query.filter_by(group_id=name).paginate(1, ITEMS_PER_PAGE, error_out=False).items
+		if data:
+			pagination = Pagination(page=1, total=len(data_len), format_total=len(data), format_number=True,
                                     per_page=ITEMS_PER_PAGE,
                                     css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
-            return render_template("index.html", page=1, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
+			return render_template("index.html", page=1, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
                                    pagination=pagination, groups=groups)
-        else:
-            group = -1
-            pagination = Pagination(page=1, total=len(data_len), format_total=len(data), format_number=True,
+		else:
+			session['group'] = -1
+			pagination = Pagination(page=1, total=len(data_len), format_total=len(data), format_number=True,
                                     per_page=ITEMS_PER_PAGE,
                                     css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
-            return render_template("index.html", page=1, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
+			return render_template("index.html", page=1, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
                                    pagination=pagination, groups=groups)
-    if int(group) == -1:
-        groups = Groups.query.all()
-        page_id = request.args.get('id')
-        if page_id is None:
-            ITEMS_PER_PAGE = 10
-        else:
-            ITEMS_PER_PAGE = int(page_id)
-        page = request.args.get(get_page_parameter(), type=int, default=1)
-        template_message = TemplateMessage.query.all()
-        data_len = Mails.query.all()
-        data = Mails.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
-        pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
+	if int(group) == -1:
+		groups = Groups.query.all()
+		page_id = request.args.get('id')
+		if page_id is None:
+			ITEMS_PER_PAGE = 50
+		else:
+			ITEMS_PER_PAGE = int(page_id)
+		page = request.args.get(get_page_parameter(), type=int, default=1)
+		session['page'] = page
+		template_message = TemplateMessage.query.all()
+		data_len = Mails.query.all()
+		data = Mails.query.paginate(page, ITEMS_PER_PAGE, error_out=False).items
+		pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
                                 per_page=ITEMS_PER_PAGE,
                                 css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
-        return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE,
+		return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE,
                                data=data,
                                pagination=pagination, groups=groups)
-    else:
-        groups = Groups.query.all()
-        page_id = request.args.get('id')
-        if page_id is None:
-            ITEMS_PER_PAGE = 10
-        else:
-            ITEMS_PER_PAGE = int(page_id)
-        page = request.args.get(get_page_parameter(), type=int, default=1)
-        template_message = TemplateMessage.query.all()
-        data_len = Mails.query.filter_by(group_id=group).all()
-        data = Mails.query.filter_by(group_id=group).paginate(page, ITEMS_PER_PAGE, error_out=False).items
-        pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
+	else:
+		groups = Groups.query.all()
+		page_id = request.args.get('id')
+		if page_id is None:
+			ITEMS_PER_PAGE = 50
+		else:
+			ITEMS_PER_PAGE = int(page_id)
+		page = request.args.get(get_page_parameter(), type=int, default=1)
+		session['page'] = page
+		template_message = TemplateMessage.query.all()
+		data_len = Mails.query.filter_by(group_id=group).all()
+		data = Mails.query.filter_by(group_id=group).paginate(page, ITEMS_PER_PAGE, error_out=False).items
+		pagination = Pagination(page=page, total=len(data_len), format_total=len(data), format_number=True,
                                 per_page=ITEMS_PER_PAGE,
                                 css_framework='bootstrap3', active_url='users-page-url', record_name='data')
 
-        return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
+		return render_template("index.html", page=page, template=template_message, per_page=ITEMS_PER_PAGE, data=data,
                                pagination=pagination, groups=groups)
 
 
@@ -217,14 +220,16 @@ def send():
         list_id = request.form.get('list_id', "").split(",")
         message_id = request.form.get('template')
         message = TemplateMessage.query.filter_by(id=message_id).first()
+        c = 1;
         for i in list_id:
             data = Mails.query.filter_by(id=i).first()
             try:
-                send_message(data.mails, message.name, message.message, message.file)
+                send_message(c, data.mails, message.name, message.message, message.file)
+                c = c + 1
             except builtins.AttributeError:
                 flash("Шаблон сообщения не выбран")
-                return redirect("/")
-    return redirect(url_for('index'))
+                return redirect("/?page="+session['page'])
+    return redirect("/?page="+str(session['page']))
 
 
 @app.route("/delete", methods=["POST", "GET"])
@@ -399,7 +404,7 @@ def groups_delete():
     return redirect('/groups')
 
 
-def send_message(email, subject, message, files):
+def send_message(index, email, subject, message, files):
     if 'email' in session:
         loginSite = User.query.filter_by(email=session['email']).first()
         if not loginSite:
@@ -428,13 +433,13 @@ def send_message(email, subject, message, files):
             s = smtplib.SMTP(host=loginSite.host, port=loginSite.port)  # mail.nic.ru
         except smtplib.SMTPServerDisconnected:
             flash('Сервер недоступен')
-            return url_for('index')
+            return redirect("/?page="+str(session['page']))
         except builtins.TimeoutError:
             flash('Не правильно введен порт')
-            return url_for('index')
+            return redirect("/?page="+str(session['page']))
         except socket.gaierror:
             flash('Не правильно введен хост')
-            return url_for('index')
+            return redirect("/?page="+str(session['page']))
         s.ehlo()
         s.starttls()
         s.ehlo()
@@ -442,13 +447,17 @@ def send_message(email, subject, message, files):
             s.login(loginSite.email, loginSite.cpassword)
         except smtplib.SMTPAuthenticationError:
             flash("Не правильно введена почта или пароль.")
-            return url_for('index')
-        print(email)
+            return redirect("/?page="+str(session['page']))
+        print(str(index) + ". " + email)
         try:
             s.sendmail(loginSite.email, email, msg.as_string())
+        except smtplib.SMTPDataError:
+            flash('Таймаут.')
+            print('Таймаут.')
+            return redirect("/?page="+str(session['page']))
         except builtins.UnicodeEncodeError:
             flash("Неправильно введена электронная почта " + email)
-            return url_for('index')
+            return redirect("/?page="+str(session['page']))
         s.quit()
     else:
         flash('Вход не выполнен')
