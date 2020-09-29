@@ -217,14 +217,19 @@ def dowload():
 @app.route("/send", methods=["POST", "GET"])
 def send():
     if request.method == "POST":
-        list_id = request.form.get('list_id', "").split(",")
-        message_id = request.form.get('template')
-        message = TemplateMessage.query.filter_by(id=message_id).first()
+        email_list = request.form.get('email_list', "").split(",")
+        template_id = request.form.get('template_id')
+        templates = TemplateMessage.query.filter_by(id=template_id).first()
         c = 1;
-        for i in list_id:
-            data = Mails.query.filter_by(id=i).first()
+        for email_id in email_list:
+            data = Mails.query.filter_by(id=email_id).first()
+            # print(data.mails)
+            # return data.mails
             try:
-                send_message(c, data.mails, message.name, message.message, message.file)
+                sendMessage = send_message(c, data.mails, templates.name, templates.message, templates.file)
+                if(sendMessage['error']):
+                    flash(sendMessage['msg'])
+                    return redirect(sendMessage['url'])
                 c = c + 1
             except builtins.AttributeError:
                 flash("Шаблон сообщения не выбран")
@@ -408,8 +413,7 @@ def send_message(index, email, subject, message, files):
     if 'email' in session:
         loginSite = User.query.filter_by(email=session['email']).first()
         if not loginSite:
-            flash('Вход не выполнен')
-            return url_for('index')
+            return {'error': True, 'msg': 'Вход не выполнен', 'url':"/?page="+str(session['page'])}
         msg = MIMEMultipart()
         msg['Subject'] = Header(subject, 'utf-8')
         msg['From'] = loginSite.email
@@ -432,36 +436,30 @@ def send_message(index, email, subject, message, files):
         try:
             s = smtplib.SMTP(host=loginSite.host, port=loginSite.port)  # mail.nic.ru
         except smtplib.SMTPServerDisconnected:
-            flash('Сервер недоступен')
-            return redirect("/?page="+str(session['page']))
+            return {'error':True, 'msg':'Сервер недоступен', 'url':"/?page="+str(session['page'])}
         except builtins.TimeoutError:
-            flash('Не правильно введен порт')
-            return redirect("/?page="+str(session['page']))
+            return {'error':True, 'msg':'Не правильно введен порт', 'url':"/?page="+str(session['page'])}
         except socket.gaierror:
-            flash('Не правильно введен хост')
-            return redirect("/?page="+str(session['page']))
+            return {'error':True, 'msg':'Не правильно введен хост', 'url':"/?page="+str(session['page'])}
         s.ehlo()
         s.starttls()
         s.ehlo()
         try:
             s.login(loginSite.email, loginSite.cpassword)
         except smtplib.SMTPAuthenticationError:
-            flash("Не правильно введена почта или пароль.")
-            return redirect("/?page="+str(session['page']))
+            return {'error':True, 'msg':'Не правильно введена почта или пароль.', 'url':"/?page="+str(session['page'])}
         print(str(index) + ". " + email)
         try:
             s.sendmail(loginSite.email, email, msg.as_string())
         except smtplib.SMTPDataError:
-            flash('Таймаут.')
             print('Таймаут.')
-            return redirect("/?page="+str(session['page']))
+            return {'error':True, 'msg':'Таймаут в почте '+email, 'url':"/?page="+str(session['page'])}
         except builtins.UnicodeEncodeError:
-            flash("Неправильно введена электронная почта " + email)
-            return redirect("/?page="+str(session['page']))
+            return {'error':True, 'msg':"Неправильно введена электронная почта " + email, 'url':"/?page="+str(session['page'])}
         s.quit()
+        return {'error':False, 'msg':email}
     else:
-        flash('Вход не выполнен')
-        return url_for('index')
+        return {'error':True, 'msg':'Таймаут', 'url':'index'}
 
 
 def obj_dict(obj):

@@ -117,18 +117,25 @@
                     <h4 class="modal-title">Подтвердите отправку почты</h4>
                 </div>
                 <div class="modal-body">
-                    <p id="text-org"></p>
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <p id="text-org"></p>
+                        </div>
+                        <div class="col-xs-6">
+                            <p style="color: green" id="sends"></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <form method="post">
-                        <input type="hidden" id="list_id" name="list_id" value="">
+                        <input type="hidden" id="list_id" name="email_list" value="">
                         <div class="row">
                             <div class="col-xs-6">
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
                                         Шаблон сообщения
                                     </div>
-                                    <div class="list-group" id="templates_available">
+                                    <div class="list-group" id="templates_available" style="height: 400px; overflow-y: scroll;">
                                         {% for t in template %}
                                             <a href="#" class="list-group-item" data-id="{{ t.id }}"
                                                data-value="{{ t.name }}">
@@ -148,7 +155,7 @@
                                 </div>
                             </div>
                         </div>
-                        <input type="submit" class="btn btn-success" value="Да">
+                        <input type="submit" id="modalBtnSend" class="btn btn-success" value="Да">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Нет</button>
                     </form>
                 </div>
@@ -160,6 +167,22 @@
             var table = $(e.target).closest('table');
             $('td input:checkbox', table).prop('checked', this.checked);
         });
+
+        // $('#modalBtnSend').click(function () {
+        //    $.ajax({
+        //         type: "POST",
+        //         data: "email_list="+$('#list_id').val()+"&template_id="+$('#template').val()+"",
+        //         url: '/send',
+        //         success: function (html) {
+        //             $('#sends').append(html)
+        //             console.log(html);
+        //         },
+        //         complete: function () {
+
+        //         }
+        //     });
+        // });
+
         $('#button_send').click(function () {
             var selectedIds = [];
             var selectedName = [];
@@ -331,7 +354,7 @@
         function addTemplate() {
             var $target = $(this);
 
-            var $input = $('<input>', {'type': 'hidden', 'name': 'template', 'value': $target.data('id')});
+            var $input = $('<input>', {'type': 'hidden', 'id': 'template_id', 'name': 'template_id', 'value': $target.data('id')});
 
             $('<a />', {'href': '#', 'class': 'list-group-item', 'data-id': $target.data('id')})
                 .append($('<span />').html($target.data('value')))
